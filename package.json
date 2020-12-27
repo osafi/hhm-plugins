@@ -1,0 +1,17 @@
+{
+  "name": "hhm-plugins",
+  "version": "1.0.0",
+  "description": "Haxball plugins",
+  "repository": "https://github.com/osafi/hhm-plugins.git",
+  "author": "Omeed Safi",
+  "license": "MIT",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "devDependencies": {
+    "jasmine": "^3.6.3",
+    "nock": "^13.0.5",
+    "node-fetch": "^2.6.1",
+    "testdouble": "^3.16.1"
+  }
+}

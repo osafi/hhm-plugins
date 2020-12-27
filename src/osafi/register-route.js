@@ -8,7 +8,7 @@ room.pluginSpec = {
     directorRegistrationUrl: 'http://localhost:8080/routes',
     username: '',
     password: '',
-    route: ''
+    route: '/'
   },
   configDescriptions: {},
   dependencies: [],
@@ -16,9 +16,8 @@ room.pluginSpec = {
   incompatible_with: [],
 }
 
-const config = room.pluginSpec.config;
-
 async function onRoomLinkHandler(url) {
+  const config = room.getConfig();
   const authorization = `Basic ${btoa(config.username + ":" + config.password)}`
   try {
     const response = await fetch(config.directorRegistrationUrl, {
