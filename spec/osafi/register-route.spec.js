@@ -4,7 +4,7 @@ const td = require('testdouble');
 describe("register-route", () => {
     const pluginPath = '../../src/osafi/register-route'
 
-    pluginTest(pluginPath, "POSTs the room link to a director with authorization", async (room) => {
+    pluginTest(pluginPath, "POSTs the room link to a director with authorization", async ({room}) => {
         td.when(room.getConfig()).thenReturn({
             username: 'john',
             password: 'doe',
@@ -23,7 +23,7 @@ describe("register-route", () => {
         expect(scope.isDone()).toBeTruthy();
     });
 
-    pluginTest(pluginPath, 'Logs error when response from director is not 2xx', async (room) => {
+    pluginTest(pluginPath, 'Logs error when response from director is not 2xx', async ({room}) => {
         nock('http://localhost:8080')
             .post('/routes')
             .reply(400, 'something bad happened');
