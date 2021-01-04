@@ -111,7 +111,7 @@ describe('stats', () => {
       progressGame(1);
 
       expect(room.getPlayerPossession()).toEqual({
-        123: 100,
+        123: 1,
         456: 0,
       });
 
@@ -120,7 +120,7 @@ describe('stats', () => {
       progressGame(50);
 
       expect(room.getPlayerPossession()).toEqual({
-        123: 100,
+        123: 51,
         456: 0,
       });
 
@@ -129,8 +129,8 @@ describe('stats', () => {
       progressGame(20);
 
       expect(room.getPlayerPossession()).toEqual({
-        123: 71.83,
-        456: 28.17,
+        123: 51,
+        456: 20,
       });
     });
 
@@ -144,6 +144,28 @@ describe('stats', () => {
       progressGame(1);
       expect(room.getPlayerPossession()).toEqual({
         123: 0,
+      });
+    });
+
+    pluginTest(pluginPath, 'resets player in possession after a goal', ({ room, progressGame, setPlayers, setBallPosition, setPlayerPosition, startGame, goal, resetPositions }) => {
+      setPlayers([makePlayer({ id: 123 })]);
+      startGame();
+      setPlayerPosition(123, 75, 1);
+      setBallPosition(100, 1);
+
+      progressGame(1);
+      expect(room.getPlayerPossession()).toEqual({
+        123: 1,
+      });
+
+      // Trigger a goal then make the ball in play again
+      goal(1);
+      resetPositions();
+      setBallPosition(1, 1);
+      progressGame(1);
+
+      expect(room.getPlayerPossession()).toEqual({
+        123: 1,
       });
     });
   });

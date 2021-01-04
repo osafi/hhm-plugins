@@ -59,13 +59,14 @@ room.onTeamGoal = (teamId) => {
 
 room.onPositionsReset = () => {
   goalScored = false;
+  lastTouchedBy = null;
 };
 
 room.isBallInPlay = () => ballInPlay;
 
 room.getBallDistribution = () => calculatePercentages(ballDistribution);
 
-room.getPlayerPossession = () => calculatePercentages(playerPossession);
+room.getPlayerPossession = () => playerPossession;
 
 // function getPlayersByTeam() {
 //   room.getPlayerList().reduce(
@@ -149,5 +150,5 @@ room.onCommand0_dist = () => {
 };
 
 room.onCommand0_poss = () => {
-  room.sendAnnouncement(`Possession: ${JSON.stringify(room.getPlayerPossession())}`);
+  room.sendAnnouncement(`Possession: ${JSON.stringify(calculatePercentages(room.getPlayerPossession()))}`);
 };
