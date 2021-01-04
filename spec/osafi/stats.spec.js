@@ -137,10 +137,10 @@ describe('stats', () => {
     pluginTest(pluginPath, 'does not update possession while ball is not in play', ({ room, progressGame, setPlayers, setBallPosition, setPlayerPosition, startGame, goal }) => {
       setPlayers([makePlayer({ id: 123 })]);
       startGame();
-      setPlayerPosition(123, 75, 1);
       setBallPosition(100, 1);
       goal(1);
 
+      setPlayerPosition(123, 75, 1);
       progressGame(1);
       expect(room.getPlayerPossession()).toEqual({
         123: 0,
