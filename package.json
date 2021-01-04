@@ -6,12 +6,21 @@
   "author": "Omeed Safi",
   "license": "MIT",
   "scripts": {
-    "test": "jasmine"
+    "test": "jasmine",
+    "prettier": "prettier --write ."
   },
   "devDependencies": {
     "jasmine": "^3.6.3",
     "nock": "^13.0.5",
     "node-fetch": "^2.6.1",
+    "prettier": "^2.2.1",
     "testdouble": "^3.16.1"
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": true,
+    "printWidth": 180
   }
 }
