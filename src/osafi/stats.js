@@ -11,6 +11,8 @@ room.pluginSpec = {
   incompatible_with: [],
 };
 
+const Team = { SPECTATORS: 0, RED: 1, BLUE: 2 };
+
 let ballInPlay = false;
 let goalScored = false;
 let ballDistribution = {
@@ -18,6 +20,8 @@ let ballDistribution = {
   1: 0,
   2: 0,
 };
+let playerPossession = {};
+let lastTouchedBy = null;
 
 room.onGameStart = () => {
   ballInPlay = false;
@@ -27,11 +31,13 @@ room.onGameStart = () => {
     1: 0,
     2: 0,
   };
+
+  for (let player of room.getPlayerList()) {
+    playerPossession[player.id] = 0;
+  }
 };
 
 room.onGameTick = () => {
-  console.log('players: ', room.getPlayerList());
-
   const ball = room.getBallPosition();
 
   if (!ballInPlay) {
@@ -43,6 +49,7 @@ room.onGameTick = () => {
   }
 
   updateBallDistribution(ball);
+  updatePossession(ball);
 };
 
 room.onTeamGoal = (teamId) => {
@@ -54,13 +61,21 @@ room.onPositionsReset = () => {
   goalScored = false;
 };
 
-room.isBallInPlay = () => {
-  return ballInPlay;
-};
+room.isBallInPlay = () => ballInPlay;
 
-room.getBallDistribution = () => {
-  return calculatePercentages(ballDistribution);
-};
+room.getBallDistribution = () => calculatePercentages(ballDistribution);
+
+room.getPlayerPossession = () => calculatePercentages(playerPossession);
+
+// function getPlayersByTeam() {
+//   room.getPlayerList().reduce(
+//     (acc, value) => {
+//       acc[value.team].push(value);
+//       return acc;
+//     },
+//     { [Team.RED]: [], [Team.BLUE]: [] }
+//   );
+// }
 
 function updateBallDistribution(ball) {
   ballDistribution[getArea(ball.x)] += 1;
@@ -74,6 +89,34 @@ function getArea(positionX) {
   } else {
     return 0;
   }
+}
+
+function updatePossession(ball) {
+  updateLastTouchedBy(ball);
+
+  if (lastTouchedBy) {
+    playerPossession[lastTouchedBy.id] += 1;
+  }
+}
+
+const ballRadius = 10;
+const playerRadius = 15;
+const triggerDistance = ballRadius + playerRadius + 0.01;
+function updateLastTouchedBy(ballPosition) {
+  for (let player of room.getPlayerList()) {
+    if (player.position != null) {
+      const distanceToBall = pointDistance(player.position, ballPosition);
+      if (distanceToBall < triggerDistance) {
+        lastTouchedBy = player;
+      }
+    }
+  }
+}
+
+function pointDistance(p1, p2) {
+  var d1 = p1.x - p2.x;
+  var d2 = p1.y - p2.y;
+  return Math.sqrt(d1 * d1 + d2 * d2);
 }
 
 function calculatePercentages(object) {
@@ -98,9 +141,13 @@ function calculatePercentages(object) {
 // DEBUG helpers
 room.onCommand0_ball = () => {
   const { x: ballX, y: ballY } = room.getBallPosition();
-  room.sendAnnouncement(`Ball ${ballX}, ${ballY}`);
+  room.sendAnnouncement(`Ball: ${ballX}, ${ballY}`);
 };
 
 room.onCommand0_dist = () => {
-  room.sendAnnouncement(`Distribution ${JSON.stringify(room.getBallDistribution())}`);
+  room.sendAnnouncement(`Distribution: ${JSON.stringify(room.getBallDistribution())}`);
+};
+
+room.onCommand0_poss = () => {
+  room.sendAnnouncement(`Possession: ${JSON.stringify(room.getPlayerPossession())}`);
 };

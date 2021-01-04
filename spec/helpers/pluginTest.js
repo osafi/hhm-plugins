@@ -15,6 +15,7 @@ global.HHM = {
 global.makePlayer = (partial) => ({
   id: partial.id || 0,
   position: partial.position || null,
+  team: partial.team || 0,
 });
 
 global.pluginTest = (pluginModulePath, testName, testFunction) => {

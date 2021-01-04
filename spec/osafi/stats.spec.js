@@ -91,18 +91,60 @@ describe('stats', () => {
     });
   });
 
-  fdescribe('player ball possession time', () => {
-    pluginTest(pluginPath, 'blah', ({ room, progressGame, setPlayers, setPlayerPosition, startGame }) => {
-      setPlayers([makePlayer({ id: 1 }), makePlayer({ id: 2 })]);
+  describe('player ball possession', () => {
+    pluginTest(pluginPath, 'player has possession after touching the ball', ({ room, progressGame, setPlayers, setPlayerPosition, setBallPosition, startGame }) => {
+      setPlayers([makePlayer({ id: 123 }), makePlayer({ id: 456 })]);
       startGame();
 
+      // Move player 123 just out of touching distance
+      setBallPosition(100, 1);
+      setPlayerPosition(123, 74.99, 1);
       progressGame(1);
 
-      setPlayerPosition(1, 5, 5);
+      expect(room.getPlayerPossession()).toEqual({
+        123: 0,
+        456: 0,
+      });
+
+      // Move player 123 to touching distance
+      setPlayerPosition(123, 75, 1);
       progressGame(1);
 
-      setPlayerPosition(2, 13, 51);
+      expect(room.getPlayerPossession()).toEqual({
+        123: 100,
+        456: 0,
+      });
+
+      // Move player 123 away from ball
+      setPlayerPosition(123, 0, 1);
+      progressGame(50);
+
+      expect(room.getPlayerPossession()).toEqual({
+        123: 100,
+        456: 0,
+      });
+
+      // Move player 456 to touching distance
+      setPlayerPosition(456, 75, 1);
+      progressGame(20);
+
+      expect(room.getPlayerPossession()).toEqual({
+        123: 71.83,
+        456: 28.17,
+      });
+    });
+
+    pluginTest(pluginPath, 'does not update possession while ball is not in play', ({ room, progressGame, setPlayers, setBallPosition, setPlayerPosition, startGame, goal }) => {
+      setPlayers([makePlayer({ id: 123 })]);
+      startGame();
+      setPlayerPosition(123, 75, 1);
+      setBallPosition(100, 1);
+      goal(1);
+
       progressGame(1);
+      expect(room.getPlayerPossession()).toEqual({
+        123: 0,
+      });
     });
   });
 });
