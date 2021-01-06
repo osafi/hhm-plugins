@@ -18,61 +18,84 @@ global.makePlayer = (partial) => ({
   team: partial.team || 0,
 });
 
+const setupInitialMocks = (room) => {
+  td.when(room.getConfig()).thenDo(() => room.pluginSpec.config);
+  td.when(room.getBallPosition()).thenReturn(null);
+  td.when(room.getPlayerList()).thenReturn([]);
+};
+
+const generateGameHelpers = (room) => {
+  // TODO: make set*Position functions take position object (nullable) or x, y
+  const setBallPosition = (x, y) => {
+    td.when(room.getBallPosition()).thenReturn({ x, y });
+  };
+
+  const setPlayers = (players) => {
+    td.when(room.getPlayerList()).thenReturn(players);
+  };
+
+  const setPlayerPosition = (playerId, x, y) => {
+    let player = room.getPlayerList().find((p) => p.id === playerId);
+    if (!player) throw new Error(`[setPlayerPosition] No player by id: ${playerId}`);
+    player.position = { x, y };
+  };
+
+  const startGame = () => {
+    setBallPosition(0, 0);
+    room.onGameStart();
+  };
+
+  const stopGame = () => {
+    room.onGameStop();
+  };
+
+  const pauseGame = () => {
+    room.onGamePause();
+  };
+
+  const unpauseGame = () => {
+    room.onGameUnpause();
+  };
+
+  const progressGame = (ticks = 1) => {
+    for (let i = 0; i < ticks; i++) {
+      room.onGameTick();
+    }
+  };
+
+  const goal = (teamId) => {
+    room.onTeamGoal(teamId);
+  };
+
+  const resetPositions = () => {
+    setBallPosition(0, 0);
+    room.onPositionsReset();
+  };
+
+  return {
+    setPlayers,
+    setPlayerPosition,
+    setBallPosition,
+    startGame,
+    stopGame,
+    pauseGame,
+    unpauseGame,
+    progressGame,
+    goal,
+    resetPositions,
+  };
+};
+
 global.pluginTest = (pluginModulePath, testName, testFunction) => {
   it(testName, async () => {
     const room = td.object();
-    td.when(room.getConfig()).thenDo(() => room.pluginSpec.config);
-
-    td.when(room.getBallPosition()).thenReturn(null);
-    const setBallPosition = (x, y) => {
-      td.when(room.getBallPosition()).thenReturn({ x, y });
-    };
-
-    td.when(room.getPlayerList()).thenReturn([]);
-    const setPlayers = (players) => {
-      td.when(room.getPlayerList()).thenReturn(players);
-    };
-
-    const setPlayerPosition = (playerId, x, y) => {
-      let player = room.getPlayerList().find((p) => p.id === playerId);
-      if (!player) throw new Error(`[setPlayerPosition] No player by id: ${playerId}`);
-      player.position = { x, y };
-    };
-
-    const startGame = () => {
-      setBallPosition(0, 0);
-      room.onGameStart();
-    };
-
-    const progressGame = (ticks = 1) => {
-      for (let i = 0; i < ticks; i++) {
-        room.onGameTick();
-      }
-    };
-
-    const goal = (teamId) => {
-      room.onTeamGoal(teamId);
-    };
-
-    const resetPositions = () => {
-      setBallPosition(0, 0);
-      room.onPositionsReset();
-    };
+    setupInitialMocks(room);
 
     HBInit = td.when(td.func()()).thenReturn(room);
     require(pluginModulePath);
 
     try {
-      await testFunction({
-        room,
-        setPlayers,
-        setPlayerPosition,
-        setBallPosition,
-        startGame,
-        progressGame,
-        goal,
-        resetPositions,
-      });
+      await testFunction({ room, ...generateGameHelpers(room) });
     } finally {
       delete require.cache[require.resolve(pluginModulePath)];
     }

@@ -34,10 +34,10 @@ async function onRoomLinkHandler(url) {
 
     if (!response.ok) {
       const body = await response.text();
-      throw new Error(`Unable to register room URL with director: ${response.status} - ${response.statusText} - ${body}`);
+      room.log(`Unable to register room URL with director: ${response.status} - ${response.statusText} - ${body}`, HHM.log.level.ERROR);
+    } else {
+      room.log('Registered room url with director', HHM.log.level.INFO);
     }
-
-    room.log('Registered room url with director', HHM.log.level.INFO);
   } catch (error) {
     room.log(error.message, HHM.log.level.ERROR);
   }
