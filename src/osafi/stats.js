@@ -6,7 +6,7 @@ room.pluginSpec = {
   version: '1.0.0',
   config: {},
   configDescriptions: {},
-  dependencies: ['osafi/game-state', 'sav/core'],
+  dependencies: ['osafi/game-state', 'sav/commands'],
   order: {
     onGameTick: {
       after: ['osafi/game-state'],

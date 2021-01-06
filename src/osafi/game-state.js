@@ -4,6 +4,7 @@ room.pluginSpec = {
   name: 'osafi/game-state',
   author: 'osafi',
   version: '1.0.0',
+  dependencies: ['sav/commands'],
   incompatible_with: ['sav/game-state'],
 };
 
@@ -38,4 +39,9 @@ room.onGameTick = () => {
   if (state === states.AWAITING_KICKOFF && (room.getBallPosition().x !== 0 || room.getBallPosition().y !== 0)) {
     triggerGameStateChange(states.BALL_IN_PLAY);
   }
+};
+
+// DEBUG helpers
+room.onCommand0_state = () => {
+  room.sendAnnouncement(`Game state: ${Object.keys(states).find((key) => states[key] === state)}`);
 };
