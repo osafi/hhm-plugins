@@ -1,20 +1,24 @@
 var room = HBInit();
 
 room.pluginSpec = {
-  name: `osafi/stats`,
-  author: `osafi`,
-  version: `1.0.0`,
+  name: 'osafi/stats',
+  author: 'osafi',
+  version: '1.0.0',
   config: {},
   configDescriptions: {},
-  dependencies: [`sav/core`],
-  order: {},
+  dependencies: ['osafi/game-state', 'sav/core'],
+  order: {
+    onGameTick: {
+      after: ['osafi/game-state'],
+    },
+  },
   incompatible_with: [],
 };
 
-const Team = { SPECTATORS: 0, RED: 1, BLUE: 2 };
+// const Team = { SPECTATORS: 0, RED: 1, BLUE: 2 };
 
-let ballInPlay = false;
-let goalScored = false;
+let statePlugin;
+
 let ballDistribution = {
   0: 0,
   1: 0,
@@ -22,60 +26,6 @@ let ballDistribution = {
 };
 let playerPossession = {};
 let lastTouchedBy = null;
-
-room.onGameStart = () => {
-  ballInPlay = false;
-  goalScored = false;
-  ballDistribution = {
-    0: 0,
-    1: 0,
-    2: 0,
-  };
-
-  for (let player of room.getPlayerList()) {
-    playerPossession[player.id] = 0;
-  }
-};
-
-room.onGameTick = () => {
-  const ball = room.getBallPosition();
-
-  if (!ballInPlay) {
-    if (goalScored || (ball.x === 0 && ball.y === 0)) {
-      return;
-    }
-
-    ballInPlay = true;
-  }
-
-  updateBallDistribution(ball);
-  updatePossession(ball);
-};
-
-room.onTeamGoal = (teamId) => {
-  ballInPlay = false;
-  goalScored = true;
-};
-
-room.onPositionsReset = () => {
-  goalScored = false;
-};
-
-room.isBallInPlay = () => ballInPlay;
-
-room.getBallDistribution = () => calculatePercentages(ballDistribution);
-
-room.getPlayerPossession = () => calculatePercentages(playerPossession);
-
-// function getPlayersByTeam() {
-//   room.getPlayerList().reduce(
-//     (acc, value) => {
-//       acc[value.team].push(value);
-//       return acc;
-//     },
-//     { [Team.RED]: [], [Team.BLUE]: [] }
-//   );
-// }
 
 function updateBallDistribution(ball) {
   ballDistribution[getArea(ball.x)] += 1;
@@ -137,6 +87,32 @@ function calculatePercentages(object) {
 
   return percentages;
 }
+
+room.onGameStart = () => {
+  ballDistribution = {
+    0: 0,
+    1: 0,
+    2: 0,
+  };
+
+  for (let player of room.getPlayerList()) {
+    playerPossession[player.id] = 0;
+  }
+};
+
+room.onGameTick = () => {
+  if (statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY) {
+    const ball = room.getBallPosition();
+    updateBallDistribution(ball);
+    updatePossession(ball);
+  }
+};
+
+room.getBallDistribution = () => calculatePercentages(ballDistribution);
+room.getPlayerPossession = () => calculatePercentages(playerPossession);
+room.onRoomLink = () => {
+  statePlugin = room.getPlugin('osafi/game-state');
+};
 
 // DEBUG helpers
 room.onCommand0_ball = () => {

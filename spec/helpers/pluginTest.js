@@ -1,4 +1,5 @@
 const td = require('testdouble');
+const anything = td.matchers.anything;
 
 global.HHM = {
   log: {
@@ -20,6 +21,7 @@ global.makePlayer = (partial) => ({
 
 const setupInitialMocks = (room) => {
   td.when(room.getConfig()).thenDo(() => room.pluginSpec.config);
+  td.when(room.getPlugin(anything())).thenReturn(td.object());
   td.when(room.getBallPosition()).thenReturn(null);
   td.when(room.getPlayerList()).thenReturn([]);
 };
@@ -86,13 +88,16 @@ const generateGameHelpers = (room) => {
   };
 };
 
-global.pluginTest = (pluginModulePath, testName, testFunction) => {
+global.pluginTest = (pluginModulePath, testName, testFunction, initializeRoom = true) => {
   it(testName, async () => {
     const room = td.object();
     setupInitialMocks(room);
 
     HBInit = td.when(td.func()()).thenReturn(room);
     require(pluginModulePath);
+    if (initializeRoom) {
+      room.onRoomLink('init');
+    }
 
     try {
       await testFunction({ room, ...generateGameHelpers(room) });

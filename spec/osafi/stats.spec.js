@@ -3,35 +3,27 @@ const td = require('testdouble');
 describe('stats', () => {
   const pluginPath = '../../src/osafi/stats';
 
-  describe('ball in play', () => {
-    pluginTest(
-      pluginPath,
-      'ball in play after moving from initial position and a goal has not occurred',
-      ({ room, progressGame, setBallPosition, startGame, goal, resetPositions }) => {
-        startGame();
-        expect(room.isBallInPlay()).toBeFalse();
-
-        setBallPosition(1, 0);
-        progressGame(1);
-        expect(room.isBallInPlay()).toBeTrue();
-
-        goal(1);
-        progressGame(1);
-        expect(room.isBallInPlay()).toBeFalse();
-
-        resetPositions();
-        progressGame(1);
-        expect(room.isBallInPlay()).toBeFalse();
-
-        setBallPosition(0, 1);
-        progressGame(1);
-        expect(room.isBallInPlay()).toBeTrue();
-      }
-    );
-  });
+  const fakeStates = { OTHER: 0, BALL_IN_PLAY: 1 };
 
   describe('ball distribution', () => {
+    pluginTest(pluginPath, 'does not update distribution while ball is not in play', ({ room, progressGame, setBallPosition, startGame, goal }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(0);
+
+      setBallPosition(100, 0);
+      progressGame(1);
+
+      expect(room.getBallDistribution()).toEqual({
+        0: 0,
+        1: 0,
+        2: 0,
+      });
+    });
+
     pluginTest(pluginPath, 'calculates distribution of ball on the court', ({ room, progressGame, setBallPosition, startGame }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(1);
+
       startGame();
 
       // In Blue zone
@@ -58,6 +50,9 @@ describe('stats', () => {
     });
 
     pluginTest(pluginPath, 'resets distribution when game is started', ({ room, progressGame, setBallPosition, startGame }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(1);
+
       setBallPosition(-100, 0);
       progressGame(1);
       expect(room.getBallDistribution()).toEqual({
@@ -76,23 +71,13 @@ describe('stats', () => {
         2: 100,
       });
     });
-
-    pluginTest(pluginPath, 'does not update distribution while ball is not in play', ({ room, progressGame, setBallPosition, startGame, goal }) => {
-      startGame();
-      setBallPosition(100, 0);
-      goal(1);
-
-      progressGame(1);
-      expect(room.getBallDistribution()).toEqual({
-        0: 0,
-        1: 0,
-        2: 0,
-      });
-    });
   });
 
   describe('player ball possession', () => {
     pluginTest(pluginPath, 'player has possession after touching the ball', ({ room, progressGame, setPlayers, setPlayerPosition, setBallPosition, startGame }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(1);
+
       setPlayers([makePlayer({ id: 123 }), makePlayer({ id: 456 })]);
       startGame();
 
@@ -135,11 +120,12 @@ describe('stats', () => {
     });
 
     pluginTest(pluginPath, 'does not update possession while ball is not in play', ({ room, progressGame, setPlayers, setBallPosition, setPlayerPosition, startGame, goal }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(0);
+
       setPlayers([makePlayer({ id: 123 })]);
       startGame();
       setBallPosition(100, 1);
-      goal(1);
-
       setPlayerPosition(123, 75, 1);
       progressGame(1);
       expect(room.getPlayerPossession()).toEqual({
