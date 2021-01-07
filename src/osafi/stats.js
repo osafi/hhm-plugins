@@ -1,4 +1,4 @@
-var room = HBInit();
+let room = HBInit();
 
 room.pluginSpec = {
   name: 'osafi/stats',
@@ -6,16 +6,14 @@ room.pluginSpec = {
   version: '1.0.0',
   config: {},
   configDescriptions: {},
-  dependencies: ['osafi/game-state', 'sav/commands'],
+  dependencies: ['osafi/game-state', 'osafi/ball-touch', 'sav/commands'],
   order: {
     onGameTick: {
-      after: ['osafi/game-state'],
+      after: ['osafi/game-state', 'osafi/ball-touch'],
     },
   },
   incompatible_with: [],
 };
-
-// const Team = { SPECTATORS: 0, RED: 1, BLUE: 2 };
 
 let statePlugin;
 
@@ -27,8 +25,8 @@ let ballDistribution = {
 let playerPossession = {};
 let lastTouchedBy = null;
 
-function updateBallDistribution(ball) {
-  ballDistribution[getArea(ball.x)] += 1;
+function updateBallDistribution() {
+  ballDistribution[getArea(room.getBallPosition().x)] += 1;
 }
 
 function getArea(positionX) {
@@ -41,32 +39,10 @@ function getArea(positionX) {
   }
 }
 
-function updatePossession(ball) {
-  updateLastTouchedBy(ball);
-
+function updatePossession() {
   if (lastTouchedBy) {
     playerPossession[lastTouchedBy.id] += 1;
   }
-}
-
-const ballRadius = 10;
-const playerRadius = 15;
-const triggerDistance = ballRadius + playerRadius + 0.01;
-function updateLastTouchedBy(ballPosition) {
-  for (let player of room.getPlayerList()) {
-    if (player.position != null) {
-      const distanceToBall = pointDistance(player.position, ballPosition);
-      if (distanceToBall < triggerDistance) {
-        lastTouchedBy = player;
-      }
-    }
-  }
-}
-
-function pointDistance(p1, p2) {
-  var d1 = p1.x - p2.x;
-  var d2 = p1.y - p2.y;
-  return Math.sqrt(d1 * d1 + d2 * d2);
 }
 
 function calculatePercentages(object) {
@@ -88,6 +64,9 @@ function calculatePercentages(object) {
   return percentages;
 }
 
+room.getBallDistribution = () => calculatePercentages(ballDistribution);
+room.getPlayerPossession = () => calculatePercentages(playerPossession);
+
 room.onGameStart = () => {
   ballDistribution = {
     0: 0,
@@ -102,14 +81,15 @@ room.onGameStart = () => {
 
 room.onGameTick = () => {
   if (statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY) {
-    const ball = room.getBallPosition();
-    updateBallDistribution(ball);
-    updatePossession(ball);
+    updateBallDistribution();
+    updatePossession();
   }
 };
 
-room.getBallDistribution = () => calculatePercentages(ballDistribution);
-room.getPlayerPossession = () => calculatePercentages(playerPossession);
+room.onPlayerTouchedBall = (player) => {
+  lastTouchedBy = player;
+};
+
 room.onRoomLink = () => {
   statePlugin = room.getPlugin('osafi/game-state');
 };
