@@ -1,13 +1,11 @@
-const td = require('testdouble');
-
 describe('stats', () => {
   const pluginPath = '../../src/osafi/stats';
 
-  const fakeStates = { OTHER: 0, BALL_IN_PLAY: 1 };
+  const fakeStates = { GOAL_CELEBRATION: 0, BALL_IN_PLAY: 1 };
 
   pluginTest(pluginPath, 'does not update stats while ball is not in play', ({ room, setPlayers, progressGame, setBallPosition, startGame }) => {
     room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.OTHER);
+    room.onGameStateChanged(fakeStates.GOAL_CELEBRATION);
 
     const player = makePlayer({ id: 123 });
     setPlayers([player]);
@@ -29,7 +27,7 @@ describe('stats', () => {
 
   pluginTest(pluginPath, 'calculates distribution of ball on the court', ({ room, progressGame, setBallPosition, startGame }) => {
     room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
     startGame();
 
@@ -58,7 +56,7 @@ describe('stats', () => {
 
   pluginTest(pluginPath, 'player has possession after touching the ball', ({ room, progressGame, setPlayers, startGame }) => {
     room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
     const player123 = makePlayer({ id: 123 });
     const player456 = makePlayer({ id: 456 });
@@ -89,7 +87,7 @@ describe('stats', () => {
 
   pluginTest(pluginPath, 'resets stats when game is started', ({ room, progressGame, setBallPosition, setPlayers, startGame }) => {
     room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
     const player123 = makePlayer({ id: 123 });
     const player456 = makePlayer({ id: 456 });
@@ -98,7 +96,7 @@ describe('stats', () => {
 
     room.onPlayerTouchedBall(player123);
     setBallPosition(-100, 0);
-    progressGame(1);
+    progressGame();
 
     expect(room.getBallDistribution()).toEqual({
       0: 0,
@@ -114,7 +112,7 @@ describe('stats', () => {
 
     room.onPlayerTouchedBall(player456);
     setBallPosition(100, 0);
-    progressGame(1);
+    progressGame();
     expect(room.getBallDistribution()).toEqual({
       0: 0,
       1: 0,

@@ -24,6 +24,7 @@ let ballDistribution = {
 };
 let playerPossession = {};
 let lastTouchedBy = null;
+let updateStats = false;
 
 function updateBallDistribution() {
   ballDistribution[getArea(room.getBallPosition().x)] += 1;
@@ -46,22 +47,17 @@ function updatePossession() {
 }
 
 function calculatePercentages(object) {
-  let percentages = {};
-  let sum = 0;
-  for (let key in object) {
-    sum = sum + object[key];
-  }
-
+  const objectEntries = Object.entries(object);
+  const sum = objectEntries.reduce((acc, [_, v]) => acc + v, 0);
   if (sum === 0) {
     return object;
   }
 
-  for (let key in object) {
-    const percentage = (100 / sum) * object[key];
-    percentages[key] = Math.round((percentage + Number.EPSILON) * 100) / 100;
-  }
-
-  return percentages;
+  return objectEntries.reduce((acc, [key, value]) => {
+    const percentage = (100 / sum) * value;
+    acc[key] = Math.round((percentage + Number.EPSILON) * 100) / 100;
+    return acc;
+  }, {});
 }
 
 room.getBallDistribution = () => calculatePercentages(ballDistribution);
@@ -80,10 +76,14 @@ room.onGameStart = () => {
 };
 
 room.onGameTick = () => {
-  if (statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY) {
+  if (updateStats) {
     updateBallDistribution();
     updatePossession();
   }
+};
+
+room.onGameStateChanged = (state) => {
+  updateStats = state === statePlugin.states.BALL_IN_PLAY;
 };
 
 room.onPlayerTouchedBall = (player) => {
