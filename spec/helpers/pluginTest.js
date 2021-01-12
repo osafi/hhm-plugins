@@ -88,8 +88,8 @@ const generateGameHelpers = (room) => {
   };
 };
 
-global.pluginTest = (pluginModulePath, testName, testFunction, initializeRoom = true) => {
-  it(testName, async () => {
+const makePluginTestFunction = (testFn) => (pluginModulePath, testName, testFunction, initializeRoom = true) => {
+  testFn(testName, async () => {
     const room = td.object();
     setupInitialMocks(room);
 
@@ -106,3 +106,6 @@ global.pluginTest = (pluginModulePath, testName, testFunction, initializeRoom = 
     }
   });
 };
+global.pluginTest = makePluginTestFunction(it);
+global.fpluginTest = makePluginTestFunction(fit);
+global.xpluginTest = makePluginTestFunction(xit);

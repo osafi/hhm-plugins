@@ -16,7 +16,7 @@ room.pluginSpec = {
 };
 
 let statePlugin;
-let lastTouchedBy;
+let lastPlayersToTouchBall = [];
 
 function pointDistance(p1, p2) {
   const d1 = p1.x - p2.x;
@@ -28,7 +28,28 @@ const ballRadius = 10;
 const playerRadius = 15;
 const triggerDistance = ballRadius + playerRadius + 0.01;
 
-room.getLastTouchedBy = () => lastTouchedBy;
+function updateLastPlayersToTouchBall(player) {
+  const indexOfPlayer = lastPlayersToTouchBall.findIndex((p) => p.id === player.id);
+  if (indexOfPlayer !== -1) {
+    lastPlayersToTouchBall.splice(indexOfPlayer, 1);
+  }
+
+  lastPlayersToTouchBall.unshift(player);
+
+  if (lastPlayersToTouchBall.length > 3) {
+    lastPlayersToTouchBall.pop();
+  }
+}
+
+room.getLastTouchedBy = () => lastPlayersToTouchBall;
+
+room.onGameStop = () => {
+  lastPlayersToTouchBall = [];
+};
+
+room.onPositionsReset = () => {
+  lastPlayersToTouchBall = [];
+};
 
 room.onGameTick = () => {
   if (statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY) {
@@ -36,8 +57,8 @@ room.onGameTick = () => {
       if (player.position != null) {
         const distanceToBall = pointDistance(player.position, room.getBallPosition());
         if (distanceToBall < triggerDistance) {
-          lastTouchedBy = player;
-          room.triggerEvent('onPlayerTouchedBall', lastTouchedBy);
+          updateLastPlayersToTouchBall(player);
+          room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
         }
       }
     }
@@ -50,5 +71,5 @@ room.onRoomLink = () => {
 
 // DEBUG helpers
 room.onCommand0_touch = () => {
-  room.sendAnnouncement(`last touch: ${JSON.stringify(lastTouchedBy)}`);
+  room.sendAnnouncement(`last touch: ${JSON.stringify(lastPlayersToTouchBall)}`);
 };

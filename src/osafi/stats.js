@@ -23,7 +23,7 @@ let ballDistribution = {
   2: 0,
 };
 let playerPossession = {};
-let lastTouchedBy = null;
+let lastPlayerToTouchBall = null;
 let updateStats = false;
 
 function updateBallDistribution() {
@@ -41,8 +41,8 @@ function getArea(positionX) {
 }
 
 function updatePossession() {
-  if (lastTouchedBy) {
-    playerPossession[lastTouchedBy.id] += 1;
+  if (lastPlayerToTouchBall) {
+    playerPossession[lastPlayerToTouchBall.id] += 1;
   }
 }
 
@@ -85,7 +85,7 @@ room.onGameStateChanged = (state) => {
 };
 
 room.onPlayerTouchedBall = (player) => {
-  lastTouchedBy = player;
+  lastPlayerToTouchBall = player;
 };
 
 room.onRoomLink = () => {
