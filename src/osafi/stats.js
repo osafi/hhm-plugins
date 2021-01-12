@@ -70,9 +70,7 @@ room.onGameStart = () => {
     2: 0,
   };
 
-  for (let player of room.getPlayerList()) {
-    playerPossession[player.id] = 0;
-  }
+  playerPossession = room.getPlayerList().reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
 };
 
 room.onGameTick = () => {

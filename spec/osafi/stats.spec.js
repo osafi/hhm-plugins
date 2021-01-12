@@ -91,7 +91,8 @@ describe('stats', () => {
 
     const player123 = makePlayer({ id: 123 });
     const player456 = makePlayer({ id: 456 });
-    setPlayers([player123, player456]);
+    const player789 = makePlayer({ id: 789 });
+    setPlayers([player123, player456, player789]);
     startGame();
 
     room.onPlayerTouchedBall(player123);
@@ -106,8 +107,10 @@ describe('stats', () => {
     expect(room.getPlayerPossession()).toEqual({
       123: 100,
       456: 0,
+      789: 0,
     });
 
+    setPlayers([player456, player789]);
     startGame();
 
     room.onPlayerTouchedBall(player456);
@@ -119,8 +122,8 @@ describe('stats', () => {
       2: 100,
     });
     expect(room.getPlayerPossession()).toEqual({
-      123: 0,
       456: 100,
+      789: 0,
     });
   });
 });
