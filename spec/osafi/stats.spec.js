@@ -7,7 +7,7 @@ describe('stats', () => {
     room.getPlugin('osafi/game-state').states = fakeStates;
     room.onGameStateChanged(fakeStates.GOAL_CELEBRATION);
 
-    const player = makePlayer({ id: 123 });
+    const player = makePlayer({ auth: '123' });
     setPlayers([player]);
     startGame();
 
@@ -58,8 +58,8 @@ describe('stats', () => {
     room.getPlugin('osafi/game-state').states = fakeStates;
     room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
-    const player123 = makePlayer({ id: 123 });
-    const player456 = makePlayer({ id: 456 });
+    const player123 = makePlayer({ auth: '123' });
+    const player456 = makePlayer({ auth: '456' });
     setPlayers([player123, player456]);
     startGame();
 
@@ -89,9 +89,9 @@ describe('stats', () => {
     room.getPlugin('osafi/game-state').states = fakeStates;
     room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
-    const player123 = makePlayer({ id: 123 });
-    const player456 = makePlayer({ id: 456 });
-    const player789 = makePlayer({ id: 789 });
+    const player123 = makePlayer({ auth: '123' });
+    const player456 = makePlayer({ auth: '456' });
+    const player789 = makePlayer({ auth: '789' });
     setPlayers([player123, player456, player789]);
     startGame();
 
@@ -124,6 +124,23 @@ describe('stats', () => {
     expect(room.getPlayerPossession()).toEqual({
       456: 100,
       789: 0,
+    });
+  });
+
+  pluginTest(pluginPath, 'collects stats for players joining mid-game', ({ room, joinGame, startGame, progressGame }) => {
+    room.getPlugin('osafi/game-state').states = fakeStates;
+
+    startGame();
+    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+    const player123 = makePlayer({ auth: '123' });
+    joinGame(player123);
+
+    room.onPlayerTouchedBall(player123);
+    progressGame();
+
+    expect(room.getPlayerPossession()).toEqual({
+      123: 100,
     });
   });
 });

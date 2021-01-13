@@ -29,7 +29,7 @@ const playerRadius = 15;
 const triggerDistance = ballRadius + playerRadius + 0.01;
 
 function updateLastPlayersToTouchBall(player) {
-  const indexOfPlayer = lastPlayersToTouchBall.findIndex((p) => p.id === player.id);
+  const indexOfPlayer = lastPlayersToTouchBall.findIndex((p) => p.auth === player.auth);
   if (indexOfPlayer !== -1) {
     lastPlayersToTouchBall.splice(indexOfPlayer, 1);
   }

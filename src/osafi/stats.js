@@ -42,7 +42,7 @@ function getArea(positionX) {
 
 function updatePossession() {
   if (lastPlayerToTouchBall) {
-    playerPossession[lastPlayerToTouchBall.id] += 1;
+    playerPossession[lastPlayerToTouchBall.auth] += 1;
   }
 }
 
@@ -70,7 +70,7 @@ room.onGameStart = () => {
     2: 0,
   };
 
-  playerPossession = room.getPlayerList().reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
+  playerPossession = room.getPlayerList().reduce((acc, p) => ({ ...acc, [p.auth]: 0 }), {});
 };
 
 room.onGameTick = () => {
@@ -78,6 +78,10 @@ room.onGameTick = () => {
     updateBallDistribution();
     updatePossession();
   }
+};
+
+room.onPlayerJoin = (player) => {
+  playerPossession[player.auth] = 0;
 };
 
 room.onGameStateChanged = (state) => {
@@ -103,5 +107,7 @@ room.onCommand0_dist = () => {
 };
 
 room.onCommand0_poss = () => {
-  room.sendAnnouncement(`Possession: ${JSON.stringify(room.getPlayerPossession())}`);
+  const players = room.getPlayerList();
+  const possessions = Object.entries(room.getPlayerPossession()).map(([auth, poss]) => players.find((p) => p.auth === auth).name + ': ' + poss + '%');
+  room.sendAnnouncement(`Possession:\n${possessions.join('\n')}`);
 };

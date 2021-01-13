@@ -49,10 +49,10 @@ describe('ball touch', () => {
     room.getPlugin('osafi/game-state').states = fakeStates;
     td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
 
-    const player111 = makePlayer({ id: 111 });
-    const player222 = makePlayer({ id: 222 });
-    const player333 = makePlayer({ id: 333 });
-    const player444 = makePlayer({ id: 444 });
+    const player111 = makePlayer({ auth: 111 });
+    const player222 = makePlayer({ auth: 222 });
+    const player333 = makePlayer({ auth: 333 });
+    const player444 = makePlayer({ auth: 444 });
     setPlayers([player111, player222, player333, player444]);
     startGame();
 

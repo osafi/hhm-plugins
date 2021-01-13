@@ -15,6 +15,7 @@ global.HHM = {
 
 global.makePlayer = (partial) => ({
   id: partial.id || 0,
+  auth: partial.auth || '',
   position: partial.position || null,
   team: partial.team || 0,
 });
@@ -36,9 +37,16 @@ const generateGameHelpers = (room) => {
     td.when(room.getPlayerList()).thenReturn(players);
   };
 
-  const setPlayerPosition = (playerId, x, y) => {
-    let player = room.getPlayerList().find((p) => p.id === playerId);
-    if (!player) throw new Error(`[setPlayerPosition] No player by id: ${playerId}`);
+  const joinGame = (player) => {
+    const players = room.getPlayerList();
+    players.push(player);
+    setPlayers(players);
+    room.onPlayerJoin(player);
+  };
+
+  const setPlayerPosition = (playerIdOrAuth, x, y) => {
+    let player = room.getPlayerList().find((p) => p.id === playerIdOrAuth || p.auth === playerIdOrAuth);
+    if (!player) throw new Error(`[setPlayerPosition] No player by id/auth: ${playerIdOrAuth}`);
     player.position = { x, y };
   };
 
@@ -76,6 +84,7 @@ const generateGameHelpers = (room) => {
 
   return {
     setPlayers,
+    joinGame,
     setPlayerPosition,
     setBallPosition,
     startGame,
