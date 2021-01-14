@@ -74,5 +74,9 @@ room.onCommand0_playertouch = () => {
   room.sendAnnouncement(`last touch: ${JSON.stringify(lastPlayersToTouchBall)}`);
 };
 room.onCommand0_touch = () => {
-  room.sendAnnouncement(`last touch: ${lastPlayersToTouchBall.map(p => p.name)}`);
+  room.sendAnnouncement(`last touch: ${lastPlayersToTouchBall.map((p) => p.name)}`);
+};
+
+room.onTeamGoal = () => {
+  room.sendAnnouncement(`last touch: ${lastPlayersToTouchBall.map((p) => p.name)}`);
 };
