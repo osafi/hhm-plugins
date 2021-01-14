@@ -81,7 +81,9 @@ room.onGameTick = () => {
 };
 
 room.onPlayerJoin = (player) => {
-  playerPossession[player.auth] = 0;
+  if (!playerPossession[player.auth]) {
+    playerPossession[player.auth] = 0;
+  }
 };
 
 room.onGameStateChanged = (state) => {

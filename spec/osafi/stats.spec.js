@@ -143,4 +143,28 @@ describe('stats', () => {
       123: 100,
     });
   });
+
+  pluginTest(pluginPath, 'keeps stats for players re-joining mid-game', ({ room, setPlayers, joinGame, leaveGame, startGame, progressGame }) => {
+    room.getPlugin('osafi/game-state').states = fakeStates;
+
+    const player123 = makePlayer({ auth: '123' });
+
+    joinGame(player123);
+    startGame();
+    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+    room.onPlayerTouchedBall(player123);
+    progressGame();
+
+    expect(room.getPlayerPossession()).toEqual({
+      123: 100,
+    });
+
+    leaveGame(player123);
+    joinGame(player123);
+
+    expect(room.getPlayerPossession()).toEqual({
+      123: 100,
+    });
+  });
 });

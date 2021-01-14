@@ -44,6 +44,12 @@ const generateGameHelpers = (room) => {
     room.onPlayerJoin(player);
   };
 
+  const leaveGame = (player) => {
+    const newPlayers = room.getPlayerList().filter((p) => p.id === player.id || p.auth === player.auth);
+    setPlayers(newPlayers);
+    room.onPlayerLeave(player);
+  };
+
   const setPlayerPosition = (playerIdOrAuth, x, y) => {
     let player = room.getPlayerList().find((p) => p.id === playerIdOrAuth || p.auth === playerIdOrAuth);
     if (!player) throw new Error(`[setPlayerPosition] No player by id/auth: ${playerIdOrAuth}`);
@@ -85,6 +91,7 @@ const generateGameHelpers = (room) => {
   return {
     setPlayers,
     joinGame,
+    leaveGame,
     setPlayerPosition,
     setBallPosition,
     startGame,
