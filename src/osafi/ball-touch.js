@@ -70,6 +70,9 @@ room.onRoomLink = () => {
 };
 
 // DEBUG helpers
-room.onCommand0_touch = () => {
+room.onCommand0_playertouch = () => {
   room.sendAnnouncement(`last touch: ${JSON.stringify(lastPlayersToTouchBall)}`);
+};
+room.onCommand0_touch = () => {
+  room.sendAnnouncement(`last touch: ${lastPlayersToTouchBall.map(p => p.name)}`);
 };
