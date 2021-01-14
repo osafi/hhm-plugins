@@ -15,12 +15,14 @@ room.pluginSpec = {
   incompatible_with: [],
 };
 
+const Areas = { CENTER: 0, RED: 1, BLUE: 2 };
+
 let statePlugin;
 
 let ballDistribution = {
-  0: 0,
-  1: 0,
-  2: 0,
+  [Areas.CENTER]: 0,
+  [Areas.RED]: 0,
+  [Areas.BLUE]: 0,
 };
 let playerPossession = {};
 let lastPlayerToTouchBall = null;
@@ -32,11 +34,11 @@ function updateBallDistribution() {
 
 function getArea(positionX) {
   if (positionX > 90) {
-    return 2;
+    return Areas.BLUE;
   } else if (positionX < -90) {
-    return 1;
+    return Areas.RED;
   } else {
-    return 0;
+    return Areas.CENTER;
   }
 }
 
@@ -65,9 +67,9 @@ room.getPlayerPossession = () => calculatePercentages(playerPossession);
 
 room.onGameStart = () => {
   ballDistribution = {
-    0: 0,
-    1: 0,
-    2: 0,
+    [Areas.CENTER]: 0,
+    [Areas.RED]: 0,
+    [Areas.BLUE]: 0,
   };
 
   playerPossession = room.getPlayerList().reduce((acc, p) => ({ ...acc, [p.auth]: 0 }), {});
@@ -105,11 +107,14 @@ room.onCommand0_ball = () => {
 };
 
 room.onCommand0_dist = () => {
-  room.sendAnnouncement(`Distribution: ${JSON.stringify(room.getBallDistribution())}`);
+  const dist = room.getBallDistribution();
+  room.sendAnnouncement(`Distribution:\nRED - ${dist[Areas.RED]}%\nCENTER - ${dist[Areas.CENTER]}%\nBLUE - ${dist[Areas.BLUE]}%`);
 };
 
 room.onCommand0_poss = () => {
   const players = room.getPlayerList();
-  const possessions = Object.entries(room.getPlayerPossession()).map(([auth, poss]) => players.find((p) => p.auth === auth).name + ': ' + poss + '%');
+  const possessions = Object.entries(room.getPlayerPossession())
+    .sort(([_, poss1], [__, poss2]) => poss2 - poss1)
+    .map(([auth, poss]) => players.find((p) => p.auth === auth).name + ': ' + poss + '%');
   room.sendAnnouncement(`Possession:\n${possessions.join('\n')}`);
 };
