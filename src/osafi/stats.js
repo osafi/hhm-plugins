@@ -106,15 +106,30 @@ room.onCommand0_ball = () => {
   room.sendAnnouncement(`Ball: ${ballX}, ${ballY}`);
 };
 
-room.onCommand0_dist = () => {
+function logDistribution() {
   const dist = room.getBallDistribution();
   room.sendAnnouncement(`Distribution:\nRED - ${dist[Areas.RED]}%\nCENTER - ${dist[Areas.CENTER]}%\nBLUE - ${dist[Areas.BLUE]}%`);
-};
+}
 
-room.onCommand0_poss = () => {
+function logPossession() {
   const players = room.getPlayerList();
-  const possessions = Object.entries(room.getPlayerPossession())
+  const possession = room.getPlayerPossession();
+  room.log(`players: ${JSON.stringify(players)}`, HHM.log.level.INFO);
+  room.log(`possession: ${JSON.stringify(possession)}`, HHM.log.level.INFO);
+
+  const possessionByPlayerName = Object.entries(possession)
     .sort(([_, poss1], [__, poss2]) => poss2 - poss1)
     .map(([auth, poss]) => players.find((p) => p.auth === auth).name + ': ' + poss + '%');
-  room.sendAnnouncement(`Possession:\n${possessions.join('\n')}`);
+  room.sendAnnouncement(`Possession:\n${possessionByPlayerName.join('\n')}`);
+}
+
+room.onCommand0_dist = () => {
+  logDistribution();
+};
+room.onCommand0_poss = () => {
+  logPossession();
+};
+room.onTeamVictory = () => {
+  logDistribution();
+  logPossession();
 };
