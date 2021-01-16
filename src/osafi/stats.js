@@ -25,7 +25,7 @@ let ballDistribution = {
   [Areas.BLUE]: 0,
 };
 let playerPossession = {};
-let lastPlayerToTouchBall = null;
+let lastTouch = null;
 let updateStats = false;
 
 function updateBallDistribution() {
@@ -43,8 +43,8 @@ function getArea(positionX) {
 }
 
 function updatePossession() {
-  if (lastPlayerToTouchBall) {
-    playerPossession[lastPlayerToTouchBall.auth] += 1;
+  if (lastTouch) {
+    playerPossession[lastTouch.player.auth] += 1;
   }
 }
 
@@ -93,7 +93,7 @@ room.onGameStateChanged = (state) => {
 };
 
 room.onPlayerTouchedBall = (player) => {
-  lastPlayerToTouchBall = player;
+  lastTouch = player;
 };
 
 room.onRoomLink = () => {
@@ -133,3 +133,5 @@ room.onTeamVictory = () => {
   logDistribution();
   logPossession();
 };
+
+// TODO: on goal - look through last touches and get the first player whose touch was a kick or they are on the scoring team - this player is the scorer

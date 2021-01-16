@@ -68,7 +68,7 @@ describe('stats', () => {
       456: 0,
     });
 
-    room.onPlayerTouchedBall(player123);
+    room.onPlayerTouchedBall({ player: player123, kicked: false });
     progressGame(50);
 
     expect(room.getPlayerPossession()).toEqual({
@@ -76,7 +76,7 @@ describe('stats', () => {
       456: 0,
     });
 
-    room.onPlayerTouchedBall(player456);
+    room.onPlayerTouchedBall({ player: player456, kicked: false });
     progressGame(20);
 
     expect(room.getPlayerPossession()).toEqual({
@@ -95,7 +95,7 @@ describe('stats', () => {
     setPlayers([player123, player456, player789]);
     startGame();
 
-    room.onPlayerTouchedBall(player123);
+    room.onPlayerTouchedBall({ player: player123, kicked: false });
     setBallPosition(-100, 0);
     progressGame();
 
@@ -113,7 +113,7 @@ describe('stats', () => {
     setPlayers([player456, player789]);
     startGame();
 
-    room.onPlayerTouchedBall(player456);
+    room.onPlayerTouchedBall({ player: player456, kicked: false });
     setBallPosition(100, 0);
     progressGame();
     expect(room.getBallDistribution()).toEqual({
@@ -136,7 +136,7 @@ describe('stats', () => {
     const player123 = makePlayer({ auth: '123' });
     joinGame(player123);
 
-    room.onPlayerTouchedBall(player123);
+    room.onPlayerTouchedBall({ player: player123, kicked: false });
     progressGame();
 
     expect(room.getPlayerPossession()).toEqual({
@@ -144,7 +144,7 @@ describe('stats', () => {
     });
   });
 
-  pluginTest(pluginPath, 'keeps stats for players re-joining mid-game', ({ room, setPlayers, joinGame, leaveGame, startGame, progressGame }) => {
+  pluginTest(pluginPath, 'keeps stats for players re-joining mid-game', ({ room, joinGame, leaveGame, startGame, progressGame }) => {
     room.getPlugin('osafi/game-state').states = fakeStates;
 
     const player123 = makePlayer({ auth: '123' });
@@ -153,7 +153,7 @@ describe('stats', () => {
     startGame();
     room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
-    room.onPlayerTouchedBall(player123);
+    room.onPlayerTouchedBall({ player: player123, kicked: false });
     progressGame();
 
     expect(room.getPlayerPossession()).toEqual({

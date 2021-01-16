@@ -28,13 +28,13 @@ const ballRadius = 10;
 const playerRadius = 15;
 const triggerDistance = ballRadius + playerRadius + 0.01;
 
-function updateLastPlayersToTouchBall(player) {
-  const indexOfPlayer = lastPlayersToTouchBall.findIndex((p) => p.auth === player.auth);
+function updateLastPlayersToTouchBall(playerThatTouched, isKick = false) {
+  const indexOfPlayer = lastPlayersToTouchBall.findIndex(({ player }) => player.auth === playerThatTouched.auth);
   if (indexOfPlayer !== -1) {
     lastPlayersToTouchBall.splice(indexOfPlayer, 1);
   }
 
-  lastPlayersToTouchBall.unshift(player);
+  lastPlayersToTouchBall.unshift({ player: playerThatTouched, kicked: isKick });
 
   if (lastPlayersToTouchBall.length > 3) {
     lastPlayersToTouchBall.pop();
@@ -65,6 +65,11 @@ room.onGameTick = () => {
   }
 };
 
+room.onPlayerBallKick = (player) => {
+  updateLastPlayersToTouchBall(player, true);
+  room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
+};
+
 room.onRoomLink = () => {
   statePlugin = room.getPlugin('osafi/game-state');
 };
@@ -73,10 +78,14 @@ room.onRoomLink = () => {
 room.onCommand0_playertouch = () => {
   room.sendAnnouncement(`last touch: ${JSON.stringify(lastPlayersToTouchBall)}`);
 };
-room.onCommand0_touch = () => {
-  room.sendAnnouncement(`last touch: ${lastPlayersToTouchBall.map((p) => p.name)}`);
-};
 
+function logLastTouches() {
+  const data = lastPlayersToTouchBall.map((t) => `[${t.kicked ? 'K' : 'T'}] ${t.player.name}`)
+  room.sendAnnouncement(`last touch: ${data}`);
+}
+room.onCommand0_touch = () => {
+  logLastTouches();
+};
 room.onTeamGoal = () => {
-  room.sendAnnouncement(`last touch: ${lastPlayersToTouchBall.map((p) => p.name)}`);
+  logLastTouches();
 };
