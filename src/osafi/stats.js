@@ -18,6 +18,7 @@ room.pluginSpec = {
 const Areas = { CENTER: 0, RED: 1, BLUE: 2 };
 
 let statePlugin;
+let getLastTouchedBy;
 
 let ballDistribution = {
   [Areas.CENTER]: 0,
@@ -25,6 +26,7 @@ let ballDistribution = {
   [Areas.BLUE]: 0,
 };
 let playerPossession = {};
+let goals = [];
 let lastTouch = null;
 let updateStats = false;
 
@@ -62,8 +64,16 @@ function calculatePercentages(object) {
   }, {});
 }
 
+function goalString(goal) {
+  const prefix = goal.ownGoal ? '🙀 Own Goal by ' : '⚽ Goal by ';
+  const scorerName = goal.scorer.name;
+  const assist = goal.assister ? ` | Assisted by ${goal.assister.name}` : '';
+  return `${prefix}${scorerName}${assist}`;
+}
+
 room.getBallDistribution = () => calculatePercentages(ballDistribution);
 room.getPlayerPossession = () => calculatePercentages(playerPossession);
+room.getGoals = () => goals;
 
 room.onGameStart = () => {
   ballDistribution = {
@@ -82,6 +92,33 @@ room.onGameTick = () => {
   }
 };
 
+room.onTeamGoal = (teamId) => {
+  const lastTouches = getLastTouchedBy();
+
+  const scoringTouchIndex = lastTouches.findIndex((touch) => touch.kicked || touch.player.team === teamId);
+  const scoringTouch = lastTouches[scoringTouchIndex];
+
+  let goal;
+  if (scoringTouch.player.team !== teamId) {
+    goal = {
+      scorer: scoringTouch.player,
+      ownGoal: true,
+    };
+  } else {
+    const touchesAfterScoringTouch = lastTouches.slice(scoringTouchIndex + 1);
+    const assistingTouch = touchesAfterScoringTouch.find((touch) => touch.kicked || touch.player.team === teamId);
+    const assister = assistingTouch && assistingTouch.player.team === teamId ? assistingTouch.player : null;
+    goal = {
+      scorer: scoringTouch.player,
+      assister,
+      ownGoal: false,
+    };
+  }
+
+  goals.push(goal);
+  room.sendAnnouncement(goalString(goal));
+};
+
 room.onPlayerJoin = (player) => {
   if (!playerPossession[player.auth]) {
     playerPossession[player.auth] = 0;
@@ -98,6 +135,7 @@ room.onPlayerTouchedBall = (player) => {
 
 room.onRoomLink = () => {
   statePlugin = room.getPlugin('osafi/game-state');
+  getLastTouchedBy = room.getPlugin('osafi/ball-touch').getLastTouchedBy;
 };
 
 // DEBUG helpers
@@ -123,15 +161,21 @@ function logPossession() {
   room.sendAnnouncement(`Possession:\n${possessionByPlayerName.join('\n')}`);
 }
 
+function logGoals() {
+  room.sendAnnouncement(goals.map(goalString).join('\n'));
+}
+
 room.onCommand0_dist = () => {
   logDistribution();
 };
 room.onCommand0_poss = () => {
   logPossession();
 };
+room.onCommand0_goal = () => {
+  logGoals();
+};
+
 room.onTeamVictory = () => {
   logDistribution();
   logPossession();
 };
-
-// TODO: on goal - look through last touches and get the first player whose touch was a kick or they are on the scoring team - this player is the scorer

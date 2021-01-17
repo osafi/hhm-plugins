@@ -4,7 +4,9 @@ room.pluginSpec = {
   name: 'osafi/ball-touch',
   author: 'osafi',
   version: '1.0.0',
-  config: {},
+  config: {
+    touchHistoryLength: 5,
+  },
   configDescriptions: {},
   dependencies: ['osafi/game-state', 'sav/commands'],
   order: {
@@ -15,6 +17,7 @@ room.pluginSpec = {
   incompatible_with: [],
 };
 
+let touchHistoryLength;
 let statePlugin;
 let lastPlayersToTouchBall = [];
 
@@ -28,7 +31,7 @@ const ballRadius = 10;
 const playerRadius = 15;
 const triggerDistance = ballRadius + playerRadius + 0.01;
 
-function updateLastPlayersToTouchBall(playerThatTouched, isKick = false) {
+function updateLastPlayersToTouchBall(playerThatTouched, isKick) {
   const indexOfPlayer = lastPlayersToTouchBall.findIndex(({ player }) => player.auth === playerThatTouched.auth);
   if (indexOfPlayer !== -1) {
     lastPlayersToTouchBall.splice(indexOfPlayer, 1);
@@ -36,12 +39,12 @@ function updateLastPlayersToTouchBall(playerThatTouched, isKick = false) {
 
   lastPlayersToTouchBall.unshift({ player: playerThatTouched, kicked: isKick });
 
-  if (lastPlayersToTouchBall.length > 3) {
+  if (lastPlayersToTouchBall.length > touchHistoryLength) {
     lastPlayersToTouchBall.pop();
   }
 }
 
-room.getLastTouchedBy = () => lastPlayersToTouchBall;
+room.getLastTouchedBy = () => [...lastPlayersToTouchBall];
 
 room.onGameStop = () => {
   lastPlayersToTouchBall = [];
@@ -53,11 +56,12 @@ room.onPositionsReset = () => {
 
 room.onGameTick = () => {
   if (statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY) {
+    const ballPosition = room.getBallPosition();
     for (let player of room.getPlayerList()) {
       if (player.position != null) {
-        const distanceToBall = pointDistance(player.position, room.getBallPosition());
+        const distanceToBall = pointDistance(player.position, ballPosition);
         if (distanceToBall < triggerDistance) {
-          updateLastPlayersToTouchBall(player);
+          updateLastPlayersToTouchBall(player, false);
           room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
         }
       }
@@ -72,6 +76,7 @@ room.onPlayerBallKick = (player) => {
 
 room.onRoomLink = () => {
   statePlugin = room.getPlugin('osafi/game-state');
+  touchHistoryLength = room.getConfig().touchHistoryLength;
 };
 
 // DEBUG helpers
@@ -80,7 +85,7 @@ room.onCommand0_playertouch = () => {
 };
 
 function logLastTouches() {
-  const data = lastPlayersToTouchBall.map((t) => `[${t.kicked ? 'K' : 'T'}] ${t.player.name}`)
+  const data = lastPlayersToTouchBall.map((t) => `[${t.kicked ? 'K' : 'T'}] ${t.player.name}`);
   room.sendAnnouncement(`last touch: ${data}`);
 }
 room.onCommand0_touch = () => {

@@ -63,63 +63,72 @@ describe('ball touch', () => {
     td.verify(room.triggerEvent(), { ignoreExtraArgs: true, times: 0 });
   });
 
-  pluginTest(pluginPath, 'can access the last players to touch/kick the ball', ({ room, setPlayers, startGame, progressGame, setBallPosition, setPlayerPosition }) => {
-    room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+  pluginTest(
+    pluginPath,
+    'can access the last players to touch/kick the ball',
+    ({ room, setPlayers, startGame, progressGame, setBallPosition, setPlayerPosition }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
 
-    const player111 = makePlayer({ auth: '111' });
-    const player222 = makePlayer({ auth: '222' });
-    const player333 = makePlayer({ auth: '333' });
-    const player444 = makePlayer({ auth: '444' });
-    setPlayers([player111, player222, player333, player444]);
-    startGame();
+      // initialize the plugin with a new touch history length
+      td.when(room.getConfig()).thenReturn({ touchHistoryLength: 3 });
+      room.onRoomLink();
 
-    expect(room.getLastTouchedBy()).toEqual([]);
+      const player111 = makePlayer({ auth: '111' });
+      const player222 = makePlayer({ auth: '222' });
+      const player333 = makePlayer({ auth: '333' });
+      const player444 = makePlayer({ auth: '444' });
+      setPlayers([player111, player222, player333, player444]);
+      startGame();
 
-    setBallPosition(100, 100);
-    setPlayerPosition('111', 100, 100);
-    progressGame();
+      expect(room.getLastTouchedBy()).toEqual([]);
 
-    expect(room.getLastTouchedBy()).toEqual([{ player: player111, kicked: false }]);
+      setBallPosition(100, 100);
+      setPlayerPosition('111', 100, 100);
+      progressGame();
 
-    setPlayerPosition('111', 0, 0);
-    setPlayerPosition('222', 100, 100);
-    progressGame();
+      expect(room.getLastTouchedBy()).toEqual([{ player: player111, kicked: false }]);
 
-    expect(room.getLastTouchedBy()).toEqual([
-      { player: player222, kicked: false },
-      { player: player111, kicked: false },
-    ]);
+      setPlayerPosition('111', 0, 0);
+      setPlayerPosition('222', 100, 100);
+      progressGame();
 
-    setPlayerPosition('222', 0, 0);
-    room.onPlayerBallKick(player333);
-    progressGame();
+      expect(room.getLastTouchedBy()).toEqual([
+        { player: player222, kicked: false },
+        { player: player111, kicked: false },
+      ]);
 
-    expect(room.getLastTouchedBy()).toEqual([
-      { player: player333, kicked: true },
-      { player: player222, kicked: false },
-      { player: player111, kicked: false },
-    ]);
+      setPlayerPosition('222', 0, 0);
+      room.onPlayerBallKick(player333);
+      progressGame();
 
-    setPlayerPosition('111', 100, 100);
-    progressGame();
+      expect(room.getLastTouchedBy()).toEqual([
+        { player: player333, kicked: true },
+        { player: player222, kicked: false },
+        { player: player111, kicked: false },
+      ]);
 
-    expect(room.getLastTouchedBy()).toEqual([
-      { player: player111, kicked: false },
-      { player: player333, kicked: true },
-      { player: player222, kicked: false },
-    ]);
+      setPlayerPosition('111', 100, 100);
+      progressGame();
 
-    setPlayerPosition('111', 0, 0);
-    room.onPlayerBallKick(player444);
-    progressGame();
+      expect(room.getLastTouchedBy()).toEqual([
+        { player: player111, kicked: false },
+        { player: player333, kicked: true },
+        { player: player222, kicked: false },
+      ]);
 
-    expect(room.getLastTouchedBy()).toEqual([
-      { player: player444, kicked: true },
-      { player: player111, kicked: false },
-      { player: player333, kicked: true },
-    ]);
-  });
+      setPlayerPosition('111', 0, 0);
+      room.onPlayerBallKick(player444);
+      progressGame();
+
+      expect(room.getLastTouchedBy()).toEqual([
+        { player: player444, kicked: true },
+        { player: player111, kicked: false },
+        { player: player333, kicked: true },
+      ]);
+    },
+    false
+  );
 
   pluginTest(pluginPath, 'resets last players to touch the ball', ({ room, setPlayers, startGame, stopGame, progressGame, setBallPosition, setPlayerPosition, resetPositions }) => {
     room.getPlugin('osafi/game-state').states = fakeStates;
