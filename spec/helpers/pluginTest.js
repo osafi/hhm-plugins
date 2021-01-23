@@ -16,7 +16,7 @@ global.HHM = {
 global.makePlayer = (partial) => ({
   id: partial.id || 0,
   auth: partial.auth || '',
-  position: partial.position || null,
+  position: partial.position || { x: 0, y: 0 },
   team: partial.team || 0,
   name: partial.name || '',
 });

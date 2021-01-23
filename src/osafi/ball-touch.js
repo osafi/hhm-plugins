@@ -8,7 +8,7 @@ room.pluginSpec = {
     touchHistoryLength: 5,
   },
   configDescriptions: {},
-  dependencies: ['osafi/game-state', 'sav/commands'],
+  dependencies: ['osafi/math', 'osafi/game-state', 'sav/commands'],
   order: {
     onGameTick: {
       after: ['osafi/game-state'],
@@ -18,30 +18,49 @@ room.pluginSpec = {
 };
 
 let touchHistoryLength;
-let statePlugin;
-let lastPlayersToTouchBall = [];
 
-function pointDistance(p1, p2) {
-  const d1 = p1.x - p2.x;
-  const d2 = p1.y - p2.y;
-  return Math.sqrt(d1 * d1 + d2 * d2);
-}
+let statePlugin;
+let math;
+
+let lastPlayersToTouchBall = [];
 
 const ballRadius = 10;
 const playerRadius = 15;
 const triggerDistance = ballRadius + playerRadius + 0.01;
 
-function updateLastPlayersToTouchBall(playerThatTouched, isKick) {
+function updateLastPlayersToTouchBall(playerThatTouched, kicked, shotOnGoal) {
   const indexOfPlayer = lastPlayersToTouchBall.findIndex(({ player }) => player.auth === playerThatTouched.auth);
   if (indexOfPlayer !== -1) {
     lastPlayersToTouchBall.splice(indexOfPlayer, 1);
   }
 
-  lastPlayersToTouchBall.unshift({ player: playerThatTouched, kicked: isKick });
+  lastPlayersToTouchBall.unshift({ player: playerThatTouched, kicked, shotOnGoal });
 
   if (lastPlayersToTouchBall.length > touchHistoryLength) {
     lastPlayersToTouchBall.pop();
   }
+}
+
+// Goal post positions for 'Huge' stadium
+const goalPostPositions = {
+  red: { top: { x: -700, y: 100 }, bottom: { x: -700, y: -100 } },
+  blue: { top: { x: 700, y: 100 }, bottom: { x: 700, y: -100 } },
+};
+
+function isShotOnGoal(player) {
+  const playerPosition = player.position;
+  const inRange = player.team === 1 ? playerPosition.x > 90 : playerPosition.x < -90;
+
+  if (!inRange) return false;
+
+  const ballPosition = room.getBallPosition();
+  const posts = player.team === 1 ? goalPostPositions.blue : goalPostPositions.red;
+
+  if (math.pointInTriangle(ballPosition, playerPosition, posts.top, posts.bottom)) {
+    room.sendAnnouncement(`${player.name}: shot on goal!`);
+    return true;
+  }
+  return false;
 }
 
 room.getLastTouchedBy = () => [...lastPlayersToTouchBall];
@@ -59,9 +78,9 @@ room.onGameTick = () => {
     const ballPosition = room.getBallPosition();
     for (let player of room.getPlayerList()) {
       if (player.position != null) {
-        const distanceToBall = pointDistance(player.position, ballPosition);
+        const distanceToBall = math.pointDistance(player.position, ballPosition);
         if (distanceToBall < triggerDistance) {
-          updateLastPlayersToTouchBall(player, false);
+          updateLastPlayersToTouchBall(player, false, false);
           room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
         }
       }
@@ -70,12 +89,14 @@ room.onGameTick = () => {
 };
 
 room.onPlayerBallKick = (player) => {
-  updateLastPlayersToTouchBall(player, true);
+  const shotOnGoal = isShotOnGoal(player);
+  updateLastPlayersToTouchBall(player, true, shotOnGoal);
   room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
 };
 
 room.onRoomLink = () => {
   statePlugin = room.getPlugin('osafi/game-state');
+  math = room.getPlugin('osafi/math');
   touchHistoryLength = room.getConfig().touchHistoryLength;
 };
 
