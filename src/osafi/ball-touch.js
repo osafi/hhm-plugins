@@ -57,7 +57,7 @@ function isShotOnGoal(player) {
   const posts = player.team === 1 ? goalPostPositions.blue : goalPostPositions.red;
 
   if (math.pointInTriangle(ballPosition, playerPosition, posts.top, posts.bottom)) {
-    room.sendAnnouncement(`${player.name}: shot on goal!`);
+    room.sendAnnouncement(`${player.name}: shot on goal!`, null, 0x00ff00, 'small-italic', 0);
     return true;
   }
   return false;
@@ -106,7 +106,7 @@ room.onCommand0_playertouch = () => {
 };
 
 function logLastTouches() {
-  const data = lastPlayersToTouchBall.map((t) => `[${t.kicked ? 'K' : 'T'}] ${t.player.name}`);
+  const data = lastPlayersToTouchBall.map((t) => `[${t.shotOnGoal ? 'S' : t.kicked ? 'K' : 'T'}] ${t.player.name}`);
   room.sendAnnouncement(`last touch: ${data}`);
 }
 room.onCommand0_touch = () => {
