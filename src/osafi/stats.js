@@ -26,6 +26,7 @@ let ballDistribution = {
   [Areas.BLUE]: 0,
 };
 let playerPossession = {};
+let teamPossession = {};
 let goals = [];
 let lastTouch = null;
 let updateStats = false;
@@ -47,6 +48,7 @@ function getArea(positionX) {
 function updatePossession() {
   if (lastTouch) {
     playerPossession[lastTouch.player.auth] += 1;
+    teamPossession[lastTouch.player.team] += 1;
   }
 }
 
@@ -73,6 +75,7 @@ function goalString(goal) {
 
 room.getBallDistribution = () => calculatePercentages(ballDistribution);
 room.getPlayerPossession = () => calculatePercentages(playerPossession);
+room.getTeamPossession = () => calculatePercentages(teamPossession);
 room.getGoals = () => goals;
 
 room.onGameStart = () => {
@@ -83,6 +86,10 @@ room.onGameStart = () => {
   };
 
   playerPossession = room.getPlayerList().reduce((acc, p) => ({ ...acc, [p.auth]: 0 }), {});
+  teamPossession = {
+    1: 0,
+    2: 0,
+  };
 };
 
 room.onGameTick = () => {
@@ -151,16 +158,18 @@ function logDistribution() {
 
 function logPossession() {
   const players = room.getPlayerList();
-  const possession = room.getPlayerPossession();
+  const playerPossession = room.getPlayerPossession();
+  const teamPossession = room.getTeamPossession();
   try {
-    const possessionByPlayerName = Object.entries(possession)
+    const possessionByPlayerName = Object.entries(playerPossession)
       .sort(([_, poss1], [__, poss2]) => poss2 - poss1)
       .map(([auth, poss]) => players.find((p) => p.auth === auth).name + ': ' + poss + '%');
-    room.sendAnnouncement(`Possession:\n${possessionByPlayerName.join('\n')}`);
+    room.sendAnnouncement(`Possession by player:\n${possessionByPlayerName.join('\n')}`);
+    room.sendAnnouncement(`Team Possession: RED - ${teamPossession[1]} | BLUE - ${teamPossession[2]}`);
   } catch (e) {
-    room.log('failed to log possession', HHM.log.level.ERROR);
+    room.log('failed to log playerPossession', HHM.log.level.ERROR);
     room.log(`players: ${JSON.stringify(players)}`, HHM.log.level.ERROR);
-    room.log(`possession: ${JSON.stringify(possession)}`, HHM.log.level.ERROR);
+    room.log(`possession: ${JSON.stringify(playerPossession)}`, HHM.log.level.ERROR);
   }
 }
 

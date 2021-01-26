@@ -34,7 +34,7 @@ describe('stats', () => {
     });
   });
 
-  describe('possession', () => {
+  describe('player possession', () => {
     pluginTest(pluginPath, 'player has possession after touching the ball', ({ room, progressGame, setPlayers, startGame }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
@@ -104,6 +104,48 @@ describe('stats', () => {
 
       expect(room.getPlayerPossession()).toEqual({
         123: 100,
+      });
+    });
+  });
+
+  describe('team possession', () => {
+    pluginTest(pluginPath, 'team possession based on individual player possession', ({ room, progressGame, setPlayers, startGame }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+      const player123 = makePlayer({ auth: '123', team: 1 });
+      const player456 = makePlayer({ auth: '456', team: 2 });
+      const player789 = makePlayer({ auth: '789', team: 1 });
+      setPlayers([player123, player456, player789]);
+      startGame();
+
+      expect(room.getTeamPossession()).toEqual({
+        1: 0,
+        2: 0,
+      });
+
+      room.onPlayerTouchedBall({ player: player123, kicked: false });
+      progressGame(50);
+
+      expect(room.getTeamPossession()).toEqual({
+        1: 100,
+        2: 0,
+      });
+
+      room.onPlayerTouchedBall({ player: player456, kicked: false });
+      progressGame(20);
+
+      expect(room.getTeamPossession()).toEqual({
+        1: 71.43,
+        2: 28.57,
+      });
+
+      room.onPlayerTouchedBall({ player: player789, kicked: false });
+      progressGame(40);
+
+      expect(room.getTeamPossession()).toEqual({
+        1: 81.82,
+        2: 18.18,
       });
     });
   });
@@ -209,9 +251,9 @@ describe('stats', () => {
     room.getPlugin('osafi/game-state').states = fakeStates;
     room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
-    const player123 = makePlayer({ auth: '123' });
-    const player456 = makePlayer({ auth: '456' });
-    const player789 = makePlayer({ auth: '789' });
+    const player123 = makePlayer({ auth: '123', team: 1 });
+    const player456 = makePlayer({ auth: '456', team: 2 });
+    const player789 = makePlayer({ auth: '789', team: 1 });
     setPlayers([player123, player456, player789]);
     startGame();
 
@@ -229,6 +271,10 @@ describe('stats', () => {
       456: 0,
       789: 0,
     });
+    expect(room.getTeamPossession()).toEqual({
+      1: 100,
+      2: 0,
+    });
 
     setPlayers([player456, player789]);
     startGame();
@@ -244,6 +290,10 @@ describe('stats', () => {
     expect(room.getPlayerPossession()).toEqual({
       456: 100,
       789: 0,
+    });
+    expect(room.getTeamPossession()).toEqual({
+      1: 0,
+      2: 100,
     });
   });
 });
