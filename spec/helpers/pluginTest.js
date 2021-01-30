@@ -13,7 +13,7 @@ global.HHM = {
   },
 };
 
-global.makePlayer = (partial) => ({
+global.makePlayer = (partial = {}) => ({
   id: partial.id || 0,
   auth: partial.auth || '',
   position: partial.position || { x: 0, y: 0 },
