@@ -108,6 +108,7 @@ room.onTeamGoal = (teamId) => {
   let goal;
   if (scoringTouch.player.team !== teamId) {
     goal = {
+      scoringTeam: teamId,
       scorer: scoringTouch.player,
       ownGoal: true,
     };
@@ -116,6 +117,7 @@ room.onTeamGoal = (teamId) => {
     const assistingTouch = touchesAfterScoringTouch.find((touch) => touch.kicked || touch.player.team === teamId);
     const assister = assistingTouch && assistingTouch.player.team === teamId ? assistingTouch.player : null;
     goal = {
+      scoringTeam: teamId,
       scorer: scoringTouch.player,
       assister,
       ownGoal: false,

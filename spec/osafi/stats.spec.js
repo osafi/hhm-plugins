@@ -166,7 +166,7 @@ describe('stats', () => {
 
       goal(1);
 
-      expect(room.getGoals()).toEqual([{ scorer: player123, assister: null, ownGoal: false }]);
+      expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player123, assister: null, ownGoal: false }]);
       td.verify(room.sendAnnouncement('⚽ Goal by player123'));
     });
 
@@ -183,14 +183,14 @@ describe('stats', () => {
 
       goal(1);
 
-      expect(room.getGoals()).toEqual([{ scorer: player456, ownGoal: true }]);
+      expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player456, ownGoal: true }]);
       td.verify(room.sendAnnouncement('🙀 Own Goal by player456'));
     });
 
     pluginTest(pluginPath, 'previous player on scoring team to touch the ball gets the assist', ({ room, setPlayers, startGame, goal }) => {
-      const player123 = makePlayer({ auth: '123', team: 1, name: 'player123' });
-      const player456 = makePlayer({ auth: '456', team: 1, name: 'player456' });
-      const player789 = makePlayer({ auth: '789', team: 2 });
+      const player123 = makePlayer({ auth: '123', team: 2, name: 'player123' });
+      const player456 = makePlayer({ auth: '456', team: 2, name: 'player456' });
+      const player789 = makePlayer({ auth: '789', team: 1 });
       setPlayers([player123, player456, player789]);
       startGame();
 
@@ -200,9 +200,9 @@ describe('stats', () => {
         { player: player456, kicked: false },
       ]);
 
-      goal(1);
+      goal(2);
 
-      expect(room.getGoals()).toEqual([{ scorer: player123, assister: player456, ownGoal: false }]);
+      expect(room.getGoals()).toEqual([{ scoringTeam: 2, scorer: player123, assister: player456, ownGoal: false }]);
       td.verify(room.sendAnnouncement('⚽ Goal by player123 | Assisted by player456'));
     });
 
@@ -221,7 +221,7 @@ describe('stats', () => {
 
       goal(1);
 
-      expect(room.getGoals()).toEqual([{ scorer: player123, assister: null, ownGoal: false }]);
+      expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player123, assister: null, ownGoal: false }]);
     });
   });
 
