@@ -6,18 +6,22 @@ describe('ball touch', () => {
 
   const fakeStates = { OTHER: 0, BALL_IN_PLAY: 1 };
 
-  pluginTest(pluginPath, 'only monitors for ball touches when game state is BALL_IN_PLAY', ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition, progressGame }) => {
-    room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.OTHER);
+  pluginTest(
+    pluginPath,
+    'only monitors for ball touches when game state is BALL_IN_PLAY',
+    ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition, progressGame }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.OTHER);
 
-    setPlayers([makePlayer({ auth: '123' })]);
-    startGame();
-    setBallPosition(1, 1);
-    setPlayerPosition('123', 1, 1);
-    progressGame();
+      setPlayers([makePlayer({ auth: '123' })]);
+      startGame();
+      setBallPosition(1, 1);
+      setPlayerPosition('123', 1, 1);
+      progressGame();
 
-    td.verify(room.triggerEvent(), { ignoreExtraArgs: true, times: 0 });
-  });
+      td.verify(room.triggerEvent(), { ignoreExtraArgs: true, times: 0 });
+    }
+  );
 
   pluginTest(
     pluginPath,
@@ -66,60 +70,68 @@ describe('ball touch', () => {
     td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: false }), { times: 1 });
   });
 
-  pluginTest(pluginPath, 'marks kick as a shot on goal if ball kicked within opposing goal posts', ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition }) => {
-    room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+  pluginTest(
+    pluginPath,
+    'marks kick as a shot on goal if ball kicked within opposing goal posts',
+    ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
 
-    const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
+      const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
 
-    const player123 = makePlayer({ auth: '123', team: 1, position: { x: 100, y: 45 } });
-    const player456 = makePlayer({ auth: '456', team: 2, position: { x: -100, y: 67 } });
-    setPlayers([player123, player456]);
-    startGame();
+      const player123 = makePlayer({ auth: '123', team: 1, position: { x: 100, y: 45 } });
+      const player456 = makePlayer({ auth: '456', team: 2, position: { x: -100, y: 67 } });
+      setPlayers([player123, player456]);
+      startGame();
 
-    setBallPosition(12, 23);
+      setBallPosition(12, 23);
 
-    td.when(mockPointInTriangle(any(), any(), any(), any())).thenReturn(false);
-    room.onPlayerBallKick(player123);
+      td.when(mockPointInTriangle(any(), any(), any(), any())).thenReturn(false);
+      room.onPlayerBallKick(player123);
 
-    td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: false }));
+      td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: false }));
 
-    td.when(mockPointInTriangle({ x: 12, y: 23 }, { x: 100, y: 45 }, { x: 700, y: 100 }, { x: 700, y: -100 })).thenReturn(true);
-    room.onPlayerBallKick(player123);
+      td.when(mockPointInTriangle({ x: 12, y: 23 }, { x: 100, y: 45 }, { x: 700, y: 100 }, { x: 700, y: -100 })).thenReturn(true);
+      room.onPlayerBallKick(player123);
 
-    td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: true }));
+      td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: true }));
 
-    td.when(mockPointInTriangle({ x: 12, y: 23 }, { x: -100, y: 67 }, { x: -700, y: 100 }, { x: -700, y: -100 })).thenReturn(true);
-    room.onPlayerBallKick(player456);
+      td.when(mockPointInTriangle({ x: 12, y: 23 }, { x: -100, y: 67 }, { x: -700, y: 100 }, { x: -700, y: -100 })).thenReturn(true);
+      room.onPlayerBallKick(player456);
 
-    td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player456, kicked: true, shotOnGoal: true }));
-  });
+      td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player456, kicked: true, shotOnGoal: true }));
+    }
+  );
 
-  pluginTest(pluginPath, 'does not check for shot on goal if player not within range', ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition }) => {
-    room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+  pluginTest(
+    pluginPath,
+    'does not check for shot on goal if player not within range',
+    ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
 
-    const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
+      const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
 
-    const player123 = makePlayer({ auth: '123', team: 1 });
-    const player456 = makePlayer({ auth: '456', team: 2 });
-    setPlayers([player123, player456]);
-    startGame();
+      const player123 = makePlayer({ auth: '123', team: 1 });
+      const player456 = makePlayer({ auth: '456', team: 2 });
+      setPlayers([player123, player456]);
+      startGame();
 
-    setPlayerPosition('123', 90, 0);
-    setPlayerPosition('456', -90, 0);
-    room.onPlayerBallKick(player123);
-    room.onPlayerBallKick(player456);
+      setPlayerPosition('123', 90, 0);
+      setPlayerPosition('456', -90, 0);
+      room.onPlayerBallKick(player123);
+      room.onPlayerBallKick(player456);
 
-    td.verify(mockPointInTriangle(), { times: 0, ignoreExtraArgs: true });
+      td.verify(mockPointInTriangle(), { times: 0, ignoreExtraArgs: true });
 
-    setPlayerPosition('123', 90.1, 0);
-    setPlayerPosition('456', -90.1, 0);
-    room.onPlayerBallKick(player123);
-    room.onPlayerBallKick(player456);
+      setPlayerPosition('123', 90.1, 0);
+      setPlayerPosition('456', -90.1, 0);
+      room.onPlayerBallKick(player123);
+      room.onPlayerBallKick(player456);
 
-    td.verify(mockPointInTriangle(), { times: 2, ignoreExtraArgs: true });
-  });
+      td.verify(mockPointInTriangle(), { times: 2, ignoreExtraArgs: true });
+    }
+  );
 
   pluginTest(
     pluginPath,
@@ -195,27 +207,31 @@ describe('ball touch', () => {
     false
   );
 
-  pluginTest(pluginPath, 'resets last players to touch the ball', ({ room, setPlayers, startGame, stopGame, progressGame, setBallPosition, setPlayerPosition, resetPositions }) => {
-    room.getPlugin('osafi/game-state').states = fakeStates;
-    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+  pluginTest(
+    pluginPath,
+    'resets last players to touch the ball',
+    ({ room, setPlayers, startGame, stopGame, progressGame, setBallPosition, setPlayerPosition, resetPositions }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
 
-    const player111 = makePlayer({ auth: '111' });
-    setPlayers([player111]);
-    startGame();
+      const player111 = makePlayer({ auth: '111' });
+      setPlayers([player111]);
+      startGame();
 
-    setPlayerPosition('111', 100, 100);
-    td.when(room.getPlugin('osafi/math').pointDistance(any(), any())).thenReturn(0);
-    progressGame();
+      setPlayerPosition('111', 100, 100);
+      td.when(room.getPlugin('osafi/math').pointDistance(any(), any())).thenReturn(0);
+      progressGame();
 
-    expect(room.getLastTouchedBy()).toEqual([{ player: player111, kicked: false, shotOnGoal: false }]);
+      expect(room.getLastTouchedBy()).toEqual([{ player: player111, kicked: false, shotOnGoal: false }]);
 
-    stopGame();
-    expect(room.getLastTouchedBy()).toEqual([]);
+      stopGame();
+      expect(room.getLastTouchedBy()).toEqual([]);
 
-    progressGame();
-    expect(room.getLastTouchedBy()).toEqual([{ player: player111, kicked: false, shotOnGoal: false }]);
+      progressGame();
+      expect(room.getLastTouchedBy()).toEqual([{ player: player111, kicked: false, shotOnGoal: false }]);
 
-    resetPositions();
-    expect(room.getLastTouchedBy()).toEqual([]);
-  });
+      resetPositions();
+      expect(room.getLastTouchedBy()).toEqual([]);
+    }
+  );
 });

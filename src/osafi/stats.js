@@ -25,11 +25,22 @@ let ballDistribution = {
   [Areas.RED]: 0,
   [Areas.BLUE]: 0,
 };
-let playerPossession = {};
+let playerStats = new Map();
 let teamPossession = {};
 let goals = [];
 let lastTouch = null;
 let updateStats = false;
+
+function makeStats(player) {
+  return {
+    player,
+    possession: 0,
+    goals: 0,
+    assists: 0,
+    ownGoals: 0,
+    shotsOnGoal: 0,
+  };
+}
 
 function updateBallDistribution() {
   ballDistribution[getArea(room.getBallPosition().x)] += 1;
@@ -47,7 +58,7 @@ function getArea(positionX) {
 
 function updatePossession() {
   if (lastTouch) {
-    playerPossession[lastTouch.player.auth] += 1;
+    playerStats.get(lastTouch.player.auth).possession += 1;
     teamPossession[lastTouch.player.team] += 1;
   }
 }
@@ -74,9 +85,18 @@ function goalString(goal) {
 }
 
 room.getBallDistribution = () => calculatePercentages(ballDistribution);
-room.getPlayerPossession = () => calculatePercentages(playerPossession);
+room.getPlayerPossession = () => {
+  const stats = [...playerStats.values()];
+  const playerPossessions = stats.reduce((acc, stat) => ({ ...acc, [stat.player.auth]: stat.possession }), {});
+  return calculatePercentages(playerPossessions);
+};
 room.getTeamPossession = () => calculatePercentages(teamPossession);
 room.getGoals = () => goals;
+room.getPlayerStats = () => {
+  const possessions = room.getPlayerPossession();
+  const stats = [...playerStats.values()];
+  return stats.map((s) => ({ ...s, possession: possessions[s.player.auth] }));
+};
 
 room.onGameStart = () => {
   ballDistribution = {
@@ -85,7 +105,11 @@ room.onGameStart = () => {
     [Areas.BLUE]: 0,
   };
 
-  playerPossession = room.getPlayerList().reduce((acc, p) => ({ ...acc, [p.auth]: 0 }), {});
+  playerStats.clear();
+  room.getPlayerList().forEach((p) => {
+    playerStats.set(p.auth, makeStats(p));
+  });
+
   teamPossession = {
     1: 0,
     2: 0,
@@ -112,6 +136,8 @@ room.onTeamGoal = (teamId) => {
       scorer: scoringTouch.player,
       ownGoal: true,
     };
+
+    playerStats.get(goal.scorer.auth).ownGoals++;
   } else {
     const touchesAfterScoringTouch = lastTouches.slice(scoringTouchIndex + 1);
     const assistingTouch = touchesAfterScoringTouch.find((touch) => touch.kicked || touch.player.team === teamId);
@@ -122,6 +148,11 @@ room.onTeamGoal = (teamId) => {
       assister,
       ownGoal: false,
     };
+
+    playerStats.get(goal.scorer.auth).goals++;
+    if (goal.assister) {
+      playerStats.get(goal.assister.auth).assists++;
+    }
   }
 
   goals.push(goal);
@@ -129,8 +160,8 @@ room.onTeamGoal = (teamId) => {
 };
 
 room.onPlayerJoin = (player) => {
-  if (!playerPossession[player.auth]) {
-    playerPossession[player.auth] = 0;
+  if (!playerStats.has(player.auth)) {
+    playerStats.set(player.auth, makeStats(player));
   }
 };
 
@@ -138,8 +169,11 @@ room.onGameStateChanged = (state) => {
   updateStats = state === statePlugin.states.BALL_IN_PLAY;
 };
 
-room.onPlayerTouchedBall = (player) => {
-  lastTouch = player;
+room.onPlayerTouchedBall = (touch) => {
+  lastTouch = touch;
+  if (touch.shotOnGoal) {
+    playerStats.get(touch.player.auth).shotsOnGoal += 1;
+  }
 };
 
 room.onRoomLink = () => {
@@ -148,48 +182,37 @@ room.onRoomLink = () => {
 };
 
 // DEBUG helpers
-room.onCommand0_ball = () => {
-  const { x: ballX, y: ballY } = room.getBallPosition();
-  room.sendAnnouncement(`Ball: ${ballX}, ${ballY}`);
-};
 
 function logDistribution() {
   const dist = room.getBallDistribution();
   room.sendAnnouncement(`Distribution:\nRED - ${dist[Areas.RED]}%\nCENTER - ${dist[Areas.CENTER]}%\nBLUE - ${dist[Areas.BLUE]}%`);
 }
 
-function logPossession() {
-  const players = room.getPlayerList();
-  const playerPossession = room.getPlayerPossession();
+function logTeamPossession() {
   const teamPossession = room.getTeamPossession();
-  try {
-    const possessionByPlayerName = Object.entries(playerPossession)
-      .sort(([_, poss1], [__, poss2]) => poss2 - poss1)
-      .map(([auth, poss]) => players.find((p) => p.auth === auth).name + ': ' + poss + '%');
-    room.sendAnnouncement(`Possession by player:\n${possessionByPlayerName.join('\n')}`);
-    room.sendAnnouncement(`Team Possession: RED - ${teamPossession[1]} | BLUE - ${teamPossession[2]}`);
-  } catch (e) {
-    room.log('failed to log playerPossession', HHM.log.level.ERROR);
-    room.log(`players: ${JSON.stringify(players)}`, HHM.log.level.ERROR);
-    room.log(`possession: ${JSON.stringify(playerPossession)}`, HHM.log.level.ERROR);
-  }
+  room.sendAnnouncement(`Team Possession: RED - ${teamPossession[1]} | BLUE - ${teamPossession[2]}`);
 }
 
 function logGoals() {
   room.sendAnnouncement(goals.map(goalString).join('\n'));
 }
 
-room.onCommand0_dist = () => {
-  logDistribution();
-};
-room.onCommand0_poss = () => {
-  logPossession();
-};
-room.onCommand0_goal = () => {
-  logGoals();
-};
+function logStats() {
+  const stats = room.getPlayerStats();
+  try {
+    const statStrings = stats
+      .sort((s1, s2) => s2.possession - s1.possession)
+      .map((s) => `${s.player.name}: ${s.goals}G | ${s.assists}A | ${s.ownGoals}OG | ${s.shotsOnGoal}S | ${s.possession}%P`);
+    room.sendAnnouncement(`Player Stats:\n${statStrings.join('\n')}`);
+  } catch (e) {
+    room.log('failed to log player stats', HHM.log.level.ERROR);
+    room.log(`stats: ${JSON.stringify(stats)}`, HHM.log.level.ERROR);
+    room.log(`players: ${JSON.stringify(room.getPlayerList())}`, HHM.log.level.ERROR);
+  }
+}
 
 room.onTeamVictory = () => {
   logDistribution();
-  logPossession();
+  logTeamPossession();
+  logStats();
 };

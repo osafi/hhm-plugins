@@ -15,7 +15,10 @@ describe('register-route', () => {
         route: '/my-room',
       });
 
-      const scope = nock('http://my-director:8080').post('/routes', { path: '/my-room', target: 'https://haxball.com' }).basicAuth({ user: 'john', pass: 'doe' }).reply(200);
+      const scope = nock('http://my-director:8080')
+        .post('/routes', { path: '/my-room', target: 'https://haxball.com' })
+        .basicAuth({ user: 'john', pass: 'doe' })
+        .reply(200);
 
       await room.onRoomLink('https://haxball.com');
 

@@ -48,6 +48,10 @@ describe('stats', () => {
         123: 0,
         456: 0,
       });
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, possession: 0 }),
+        jasmine.objectContaining({ player: player456, possession: 0 }),
+      ]);
 
       room.onPlayerTouchedBall({ player: player123, kicked: false });
       progressGame(50);
@@ -56,6 +60,10 @@ describe('stats', () => {
         123: 100,
         456: 0,
       });
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, possession: 100 }),
+        jasmine.objectContaining({ player: player456, possession: 0 }),
+      ]);
 
       room.onPlayerTouchedBall({ player: player456, kicked: false });
       progressGame(20);
@@ -64,6 +72,10 @@ describe('stats', () => {
         123: 71.43,
         456: 28.57,
       });
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, possession: 71.43 }),
+        jasmine.objectContaining({ player: player456, possession: 28.57 }),
+      ]);
     });
 
     pluginTest(pluginPath, 'collects stats for players joining mid-game', ({ room, joinGame, startGame, progressGame }) => {
@@ -81,6 +93,7 @@ describe('stats', () => {
       expect(room.getPlayerPossession()).toEqual({
         123: 100,
       });
+      expect(room.getPlayerStats()).toEqual([jasmine.objectContaining({ player: player123, possession: 100 })]);
     });
 
     pluginTest(pluginPath, 'keeps stats for players re-joining mid-game', ({ room, joinGame, leaveGame, startGame, progressGame }) => {
@@ -98,6 +111,7 @@ describe('stats', () => {
       expect(room.getPlayerPossession()).toEqual({
         123: 100,
       });
+      expect(room.getPlayerStats()).toEqual([jasmine.objectContaining({ player: player123, possession: 100 })]);
 
       leaveGame(player123);
       joinGame(player123);
@@ -105,7 +119,33 @@ describe('stats', () => {
       expect(room.getPlayerPossession()).toEqual({
         123: 100,
       });
+      expect(room.getPlayerStats()).toEqual([jasmine.objectContaining({ player: player123, possession: 100 })]);
     });
+  });
+
+  pluginTest(pluginPath, 'keeps stat on players shot attempts', ({ room, setPlayers, startGame }) => {
+    room.getPlugin('osafi/game-state').states = fakeStates;
+    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+    const player123 = makePlayer({ auth: '123' });
+    const player456 = makePlayer({ auth: '456' });
+    setPlayers([player123, player456]);
+    startGame();
+
+    expect(room.getPlayerStats()).toEqual([
+      jasmine.objectContaining({ player: player123, shotsOnGoal: 0 }),
+      jasmine.objectContaining({ player: player456, shotsOnGoal: 0 }),
+    ]);
+
+    room.onPlayerTouchedBall({ player: player123, kicked: true, shotOnGoal: false });
+    room.onPlayerTouchedBall({ player: player123, kicked: true, shotOnGoal: true });
+    room.onPlayerTouchedBall({ player: player456, kicked: true, shotOnGoal: true });
+    room.onPlayerTouchedBall({ player: player456, kicked: true, shotOnGoal: true });
+
+    expect(room.getPlayerStats()).toEqual([
+      jasmine.objectContaining({ player: player123, shotsOnGoal: 1 }),
+      jasmine.objectContaining({ player: player456, shotsOnGoal: 2 }),
+    ]);
   });
 
   describe('team possession', () => {
@@ -158,6 +198,10 @@ describe('stats', () => {
       startGame();
 
       expect(room.getGoals()).toEqual([]);
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, goals: 0 }),
+        jasmine.objectContaining({ player: player456, goals: 0 }),
+      ]);
 
       td.when(room.getPlugin('osafi/ball-touch').getLastTouchedBy()).thenReturn([
         { player: player456, kicked: false },
@@ -167,6 +211,10 @@ describe('stats', () => {
       goal(1);
 
       expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player123, assister: null, ownGoal: false }]);
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, goals: 1 }),
+        jasmine.objectContaining({ player: player456, goals: 0 }),
+      ]);
       td.verify(room.sendAnnouncement('⚽ Goal by player123'));
     });
 
@@ -184,6 +232,10 @@ describe('stats', () => {
       goal(1);
 
       expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player456, ownGoal: true }]);
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123 }),
+        jasmine.objectContaining({ player: player456, ownGoals: 1 }),
+      ]);
       td.verify(room.sendAnnouncement('🙀 Own Goal by player456'));
     });
 
@@ -203,6 +255,11 @@ describe('stats', () => {
       goal(2);
 
       expect(room.getGoals()).toEqual([{ scoringTeam: 2, scorer: player123, assister: player456, ownGoal: false }]);
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, goals: 1, assists: 0 }),
+        jasmine.objectContaining({ player: player456, goals: 0, assists: 1 }),
+        jasmine.objectContaining({ player: player789, goals: 0, assists: 0 }),
+      ]);
       td.verify(room.sendAnnouncement('⚽ Goal by player123 | Assisted by player456'));
     });
 
@@ -222,6 +279,11 @@ describe('stats', () => {
       goal(1);
 
       expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player123, assister: null, ownGoal: false }]);
+      expect(room.getPlayerStats()).toEqual([
+        jasmine.objectContaining({ player: player123, goals: 1, assists: 0 }),
+        jasmine.objectContaining({ player: player456, goals: 0, assists: 0 }),
+        jasmine.objectContaining({ player: player789, goals: 0, assists: 0 }),
+      ]);
     });
   });
 
@@ -233,7 +295,7 @@ describe('stats', () => {
     setPlayers([player]);
     startGame();
 
-    room.onPlayerTouchedBall(player);
+    room.onPlayerTouchedBall({ player });
     setBallPosition(100, 0);
     progressGame(5);
 
@@ -245,6 +307,7 @@ describe('stats', () => {
     expect(room.getPlayerPossession()).toEqual({
       123: 0,
     });
+    expect(room.getPlayerStats()).toEqual([{ player, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 }]);
   });
 
   pluginTest(pluginPath, 'resets stats when game is started', ({ room, progressGame, setBallPosition, setPlayers, startGame }) => {
@@ -271,6 +334,12 @@ describe('stats', () => {
       456: 0,
       789: 0,
     });
+    // TODO: add goals/assists/owngoals/shotsOnGoal to stats to ensure they are also reset
+    expect(room.getPlayerStats()).toEqual([
+      { player: player123, possession: 100, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+      { player: player456, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+      { player: player789, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+    ]);
     expect(room.getTeamPossession()).toEqual({
       1: 100,
       2: 0,
@@ -291,6 +360,10 @@ describe('stats', () => {
       456: 100,
       789: 0,
     });
+    expect(room.getPlayerStats()).toEqual([
+      { player: player456, possession: 100, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+      { player: player789, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+    ]);
     expect(room.getTeamPossession()).toEqual({
       1: 0,
       2: 100,
