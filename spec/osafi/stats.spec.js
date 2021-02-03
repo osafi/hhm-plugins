@@ -310,63 +310,100 @@ describe('stats', () => {
     expect(room.getPlayerStats()).toEqual([{ player, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 }]);
   });
 
-  pluginTest(pluginPath, 'resets stats when game is started', ({ room, progressGame, setBallPosition, setPlayers, startGame }) => {
-    room.getPlugin('osafi/game-state').states = fakeStates;
-    room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+  describe('reset stats when game started', () => {
+    pluginTest(pluginPath, 'ball distribution', ({ room, progressGame, setBallPosition, setPlayers, startGame, goal }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
-    const player123 = makePlayer({ auth: '123', team: 1 });
-    const player456 = makePlayer({ auth: '456', team: 2 });
-    const player789 = makePlayer({ auth: '789', team: 1 });
-    setPlayers([player123, player456, player789]);
-    startGame();
+      startGame();
 
-    room.onPlayerTouchedBall({ player: player123, kicked: false });
-    setBallPosition(-100, 0);
-    progressGame();
+      setBallPosition(-100, 0);
+      progressGame();
+      setBallPosition(100, 0);
+      progressGame();
+      setBallPosition(5, 5);
+      progressGame();
 
-    expect(room.getBallDistribution()).toEqual({
-      0: 0,
-      1: 100,
-      2: 0,
-    });
-    expect(room.getPlayerPossession()).toEqual({
-      123: 100,
-      456: 0,
-      789: 0,
-    });
-    // TODO: add goals/assists/owngoals/shotsOnGoal to stats to ensure they are also reset
-    expect(room.getPlayerStats()).toEqual([
-      { player: player123, possession: 100, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
-      { player: player456, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
-      { player: player789, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
-    ]);
-    expect(room.getTeamPossession()).toEqual({
-      1: 100,
-      2: 0,
+      expect(room.getBallDistribution()).toEqual({
+        0: 33.33,
+        1: 33.33,
+        2: 33.33,
+      });
+
+      startGame();
+
+      expect(room.getBallDistribution()).toEqual({
+        0: 0,
+        1: 0,
+        2: 0,
+      });
     });
 
-    setPlayers([player456, player789]);
-    startGame();
+    pluginTest(pluginPath, 'team possession', ({ room, progressGame, setBallPosition, setPlayers, startGame, goal }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
-    room.onPlayerTouchedBall({ player: player456, kicked: false });
-    setBallPosition(100, 0);
-    progressGame();
-    expect(room.getBallDistribution()).toEqual({
-      0: 0,
-      1: 0,
-      2: 100,
+      const player123 = makePlayer({ auth: '123', team: 1 });
+      const player456 = makePlayer({ auth: '456', team: 2 });
+      setPlayers([player123, player456]);
+      startGame();
+
+      room.onPlayerTouchedBall({ player: player123 });
+      progressGame(3);
+
+      room.onPlayerTouchedBall({ player: player456 });
+      progressGame(1);
+
+      expect(room.getTeamPossession()).toEqual({
+        1: 75,
+        2: 25,
+      });
+
+      startGame();
+
+      expect(room.getTeamPossession()).toEqual({
+        1: 0,
+        2: 0,
+      });
     });
-    expect(room.getPlayerPossession()).toEqual({
-      456: 100,
-      789: 0,
-    });
-    expect(room.getPlayerStats()).toEqual([
-      { player: player456, possession: 100, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
-      { player: player789, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
-    ]);
-    expect(room.getTeamPossession()).toEqual({
-      1: 0,
-      2: 100,
+
+    pluginTest(pluginPath, 'player stats', ({ room, progressGame, setBallPosition, setPlayers, startGame, goal }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+      const player123 = makePlayer({ auth: '123', team: 1 });
+      const player456 = makePlayer({ auth: '456', team: 2 });
+      const player789 = makePlayer({ auth: '789', team: 1 });
+      setPlayers([player123, player456, player789]);
+      startGame();
+
+      // Goal + assist for team 1
+      room.onPlayerTouchedBall({ player: player789, kicked: true, shotOnGoal: true });
+      td.when(room.getPlugin('osafi/ball-touch').getLastTouchedBy()).thenReturn([
+        { player: player789, kicked: true, shotOnGoal: true },
+        { player: player123, kicked: false },
+      ]);
+      goal(1);
+      progressGame();
+
+      // Own goal by team 2
+      td.when(room.getPlugin('osafi/ball-touch').getLastTouchedBy()).thenReturn([{ player: player456, kicked: true }]);
+      goal(1);
+
+      expect(room.getPlayerStats()).toEqual([
+        { player: player123, possession: 0, goals: 0, assists: 1, ownGoals: 0, shotsOnGoal: 0 },
+        { player: player456, possession: 0, goals: 0, assists: 0, ownGoals: 1, shotsOnGoal: 0 },
+        { player: player789, possession: 100, goals: 1, assists: 0, ownGoals: 0, shotsOnGoal: 1 },
+      ]);
+
+      // player123 leaves for next game
+      setPlayers([player456, player789]);
+      startGame();
+
+      expect(room.getPlayerStats()).toEqual([
+        { player: player456, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+        { player: player789, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
+      ]);
     });
   });
 });
