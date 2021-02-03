@@ -287,7 +287,7 @@ describe('stats', () => {
   });
 
   describe('reset stats when game started', () => {
-    pluginTest(pluginPath, 'ball distribution', ({ room, progressGame, setBallPosition, setPlayers, startGame, goal }) => {
+    pluginTest(pluginPath, 'ball distribution', ({ room, progressGame, setBallPosition, startGame }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
@@ -315,7 +315,7 @@ describe('stats', () => {
       });
     });
 
-    pluginTest(pluginPath, 'team possession', ({ room, progressGame, setBallPosition, setPlayers, startGame, goal }) => {
+    pluginTest(pluginPath, 'team possession', ({ room, progressGame, setPlayers, startGame }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
@@ -343,7 +343,7 @@ describe('stats', () => {
       });
     });
 
-    pluginTest(pluginPath, 'player stats', ({ room, progressGame, setBallPosition, setPlayers, startGame, goal }) => {
+    pluginTest(pluginPath, 'player stats', ({ room, progressGame, setPlayers, startGame, goal }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
 
