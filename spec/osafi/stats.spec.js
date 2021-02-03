@@ -213,7 +213,7 @@ describe('stats', () => {
       expect(room.getGoals()).toEqual([{ scoringTeam: 1, scorer: player456, ownGoal: true }]);
       expect(room.getPlayerStats()).toEqual([
         jasmine.objectContaining({ player: player123 }),
-        jasmine.objectContaining({ player: player456, ownGoals: 1 }),
+        jasmine.objectContaining({ player: player456, goals: 0, ownGoals: 1 }),
       ]);
       td.verify(room.sendAnnouncement('🙀 Own Goal by player456'));
     });
