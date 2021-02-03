@@ -85,17 +85,13 @@ function goalString(goal) {
 }
 
 room.getBallDistribution = () => calculatePercentages(ballDistribution);
-room.getPlayerPossession = () => {
-  const stats = [...playerStats.values()];
-  const playerPossessions = stats.reduce((acc, stat) => ({ ...acc, [stat.player.auth]: stat.possession }), {});
-  return calculatePercentages(playerPossessions);
-};
 room.getTeamPossession = () => calculatePercentages(teamPossession);
 room.getGoals = () => goals;
 room.getPlayerStats = () => {
-  const possessions = room.getPlayerPossession();
   const stats = [...playerStats.values()];
-  return stats.map((s) => ({ ...s, possession: possessions[s.player.auth] }));
+  const possessionTimeByPlayer = stats.reduce((acc, stat) => ({ ...acc, [stat.player.auth]: stat.possession }), {});
+  const possessionPercentageByPlayer = calculatePercentages(possessionTimeByPlayer);
+  return stats.map((s) => ({ ...s, possession: possessionPercentageByPlayer[s.player.auth] }));
 };
 
 room.onGameStart = () => {

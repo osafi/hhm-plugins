@@ -44,10 +44,6 @@ describe('stats', () => {
       setPlayers([player123, player456]);
       startGame();
 
-      expect(room.getPlayerPossession()).toEqual({
-        123: 0,
-        456: 0,
-      });
       expect(room.getPlayerStats()).toEqual([
         jasmine.objectContaining({ player: player123, possession: 0 }),
         jasmine.objectContaining({ player: player456, possession: 0 }),
@@ -56,10 +52,6 @@ describe('stats', () => {
       room.onPlayerTouchedBall({ player: player123, kicked: false });
       progressGame(50);
 
-      expect(room.getPlayerPossession()).toEqual({
-        123: 100,
-        456: 0,
-      });
       expect(room.getPlayerStats()).toEqual([
         jasmine.objectContaining({ player: player123, possession: 100 }),
         jasmine.objectContaining({ player: player456, possession: 0 }),
@@ -68,10 +60,6 @@ describe('stats', () => {
       room.onPlayerTouchedBall({ player: player456, kicked: false });
       progressGame(20);
 
-      expect(room.getPlayerPossession()).toEqual({
-        123: 71.43,
-        456: 28.57,
-      });
       expect(room.getPlayerStats()).toEqual([
         jasmine.objectContaining({ player: player123, possession: 71.43 }),
         jasmine.objectContaining({ player: player456, possession: 28.57 }),
@@ -90,9 +78,6 @@ describe('stats', () => {
       room.onPlayerTouchedBall({ player: player123, kicked: false });
       progressGame();
 
-      expect(room.getPlayerPossession()).toEqual({
-        123: 100,
-      });
       expect(room.getPlayerStats()).toEqual([jasmine.objectContaining({ player: player123, possession: 100 })]);
     });
 
@@ -108,17 +93,11 @@ describe('stats', () => {
       room.onPlayerTouchedBall({ player: player123, kicked: false });
       progressGame();
 
-      expect(room.getPlayerPossession()).toEqual({
-        123: 100,
-      });
       expect(room.getPlayerStats()).toEqual([jasmine.objectContaining({ player: player123, possession: 100 })]);
 
       leaveGame(player123);
       joinGame(player123);
 
-      expect(room.getPlayerPossession()).toEqual({
-        123: 100,
-      });
       expect(room.getPlayerStats()).toEqual([jasmine.objectContaining({ player: player123, possession: 100 })]);
     });
   });
@@ -303,9 +282,6 @@ describe('stats', () => {
       0: 0,
       1: 0,
       2: 0,
-    });
-    expect(room.getPlayerPossession()).toEqual({
-      123: 0,
     });
     expect(room.getPlayerStats()).toEqual([{ player, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 }]);
   });
