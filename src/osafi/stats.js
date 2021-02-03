@@ -133,7 +133,7 @@ room.onTeamGoal = (teamId) => {
       ownGoal: true,
     };
 
-    playerStats.get(goal.scorer.auth).ownGoals++;
+    playerStats.get(goal.scorer.auth).ownGoals += 1;
   } else {
     const touchesAfterScoringTouch = lastTouches.slice(scoringTouchIndex + 1);
     const assistingTouch = touchesAfterScoringTouch.find((touch) => touch.kicked || touch.player.team === teamId);
@@ -145,9 +145,9 @@ room.onTeamGoal = (teamId) => {
       ownGoal: false,
     };
 
-    playerStats.get(goal.scorer.auth).goals++;
+    playerStats.get(goal.scorer.auth).goals += 1;
     if (goal.assister) {
-      playerStats.get(goal.assister.auth).assists++;
+      playerStats.get(goal.assister.auth).assists += 1;
     }
   }
 
