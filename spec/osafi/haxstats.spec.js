@@ -129,6 +129,73 @@ describe('haxstats', () => {
 
   pluginTest(
     pluginPath,
+    'sends message with link to saved game data',
+    async ({ room }) => {
+      td.when(room.getConfig()).thenReturn({
+        username: 'john',
+        password: 'doe',
+        haxstatsUrl: 'http://my-haxstats',
+      });
+      room.onRoomLink('doesntmatter');
+
+      nock('http://my-haxstats', { reqheaders: { 'Content-Type': 'application/json' } })
+        .post('/games')
+        .basicAuth({ user: 'john', pass: 'doe' })
+        .reply(201, null, { Location: 'http://my-haxstats/games/123' });
+
+      td.when(room.getPlugin('osafi/stats').getTeamPossession()).thenReturn({
+        1: 0,
+        2: 0,
+      });
+      td.when(room.getPlugin('osafi/stats').getGoals()).thenReturn([]);
+      td.when(room.getPlugin('osafi/stats').getPlayerStats()).thenReturn([]);
+
+      await room.onTeamVictory({
+        red: 0,
+        blue: 0,
+      });
+
+      td.verify(room.sendAnnouncement('Game Summary: http://my-haxstats/games/123'));
+    },
+    false
+  );
+
+  pluginTest(
+    pluginPath,
+    'sends message with link to saved game data at custom url',
+    async ({ room }) => {
+      td.when(room.getConfig()).thenReturn({
+        username: 'john',
+        password: 'doe',
+        haxstatsUrl: 'http://my-haxstats',
+        gameSummaryUrl: 'http://stats/dashboard?id={gameId}',
+      });
+      room.onRoomLink('doesntmatter');
+
+      nock('http://my-haxstats', { reqheaders: { 'Content-Type': 'application/json' } })
+        .post('/games')
+        .basicAuth({ user: 'john', pass: 'doe' })
+        .reply(201, null, { Location: 'http://my-haxstats/games/123' });
+
+      td.when(room.getPlugin('osafi/stats').getTeamPossession()).thenReturn({
+        1: 0,
+        2: 0,
+      });
+      td.when(room.getPlugin('osafi/stats').getGoals()).thenReturn([]);
+      td.when(room.getPlugin('osafi/stats').getPlayerStats()).thenReturn([]);
+
+      await room.onTeamVictory({
+        red: 0,
+        blue: 0,
+      });
+
+      td.verify(room.sendAnnouncement('Game Summary: http://stats/dashboard?id=123'));
+    },
+    false
+  );
+
+  pluginTest(
+    pluginPath,
     'Logs error when response from haxstats api is not 2xx',
     async ({ room }) => {
       td.when(room.getConfig()).thenReturn({

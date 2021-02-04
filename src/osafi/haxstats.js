@@ -17,6 +17,7 @@ room.pluginSpec = {
 
 let haxstatsUrl;
 let authorization;
+let customGameSummaryUrl;
 
 async function postData(url, data) {
   try {
@@ -32,6 +33,8 @@ async function postData(url, data) {
     if (!response.ok) {
       const body = await response.text();
       room.log(`Bad response from HaxStats API: ${response.status} - ${response.statusText} - ${body}`, HHM.log.level.ERROR);
+    } else {
+      return response;
     }
   } catch (error) {
     room.log(error.message, HHM.log.level.ERROR);
@@ -90,12 +93,24 @@ room.onTeamVictory = async (scores) => {
   };
 
   room.log(`Sending game data: ${JSON.stringify(game)}`, HHM.log.level.WARN);
-  await postData(`${haxstatsUrl}/games`, game);
+  const response = await postData(`${haxstatsUrl}/games`, game);
+
+  if (response) {
+    let summaryUrl = response.headers.get('Location');
+    if (customGameSummaryUrl) {
+      const lastSlash = summaryUrl.lastIndexOf('/');
+      const gameId = summaryUrl.substring(lastSlash + 1);
+      summaryUrl = customGameSummaryUrl.replace('{gameId}', gameId);
+    }
+
+    room.sendAnnouncement(`Game Summary: ${summaryUrl}`);
+  }
 };
 
 room.onRoomLink = () => {
   const config = room.getConfig();
   haxstatsUrl = config.haxstatsUrl;
+  customGameSummaryUrl = config.gameSummaryUrl;
   authorization = `Basic ${btoa(config.username + ':' + config.password)}`;
 
   const statsPlugin = room.getPlugin('osafi/stats');
