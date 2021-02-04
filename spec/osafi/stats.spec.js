@@ -381,5 +381,23 @@ describe('stats', () => {
         { player: player789, possession: 0, goals: 0, assists: 0, ownGoals: 0, shotsOnGoal: 0 },
       ]);
     });
+
+    pluginTest(pluginPath, 'goals', ({ room, setPlayers, startGame, goal }) => {
+      room.getPlugin('osafi/game-state').states = fakeStates;
+      room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+      const player123 = makePlayer({ auth: '123', team: 1 });
+      setPlayers([player123]);
+      startGame();
+
+      td.when(room.getPlugin('osafi/ball-touch').getLastTouchedBy()).thenReturn([{ player: player123, kicked: true, shotOnGoal: true }]);
+      goal(1);
+
+      expect(room.getGoals().length).toEqual(1);
+
+      startGame();
+
+      expect(room.getGoals().length).toEqual(0);
+    });
   });
 });

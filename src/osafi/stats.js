@@ -110,6 +110,8 @@ room.onGameStart = () => {
     1: 0,
     2: 0,
   };
+
+  goals = [];
 };
 
 room.onGameTick = () => {
