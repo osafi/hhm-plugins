@@ -97,6 +97,8 @@ room.onTeamVictory = async (scores) => {
 
   if (response) {
     let summaryUrl = response.headers.get('Location');
+    room.log(`Response headers: ${JSON.stringify(response.headers)}`, HHM.log.level.WARN);
+    room.log(`Location header: ${summaryUrl}`, HHM.log.level.WARN);
     if (customGameSummaryUrl) {
       const lastSlash = summaryUrl.lastIndexOf('/');
       const gameId = summaryUrl.substring(lastSlash + 1);
