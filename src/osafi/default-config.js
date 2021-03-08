@@ -20,8 +20,12 @@ room.pluginSpec = {
     },
   },
   configDescriptions: {},
-  dependencies: [],
-  order: {},
+  dependencies: ['osafi/stadium'],
+  order: {
+    onRoomLink: {
+      after: ['osafi/stadium'],
+    },
+  },
   incompatible_with: [],
 };
 
@@ -29,7 +33,7 @@ function setRoomConfig() {
   const config = room.getConfig();
   room.setScoreLimit(config.scoreLimit);
   room.setTimeLimit(config.timeLimit);
-  room.setDefaultStadium(config.stadium);
+  room.getPlugin('osafi/stadium').setStadium(config.stadium);
 
   const { redTeamColors, blueTeamColors } = config;
   room.setTeamColors(1, redTeamColors.angle, redTeamColors.text, redTeamColors.colors);

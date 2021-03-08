@@ -27,7 +27,7 @@ describe('default-config', () => {
 
       td.verify(room.setScoreLimit(5));
       td.verify(room.setTimeLimit(10));
-      td.verify(room.setDefaultStadium('Huge'));
+      td.verify(room.getPlugin('osafi/stadium').setStadium('Huge'));
       td.verify(room.setTeamColors(1, 120, 0x00ff00, [0xff0000, 0x00ff00]));
       td.verify(room.setTeamColors(2, 90, 0x0000ff, [0xefefef, 0xfefefe, 0x010101]));
     },
@@ -43,7 +43,7 @@ describe('default-config', () => {
 
       td.verify(room.setScoreLimit(3), { times: 2 });
       td.verify(room.setTimeLimit(3), { times: 2 });
-      td.verify(room.setDefaultStadium('Classic'), { times: 2 });
+      td.verify(room.getPlugin('osafi/stadium').setStadium('Classic'), { times: 2 });
       td.verify(room.setTeamColors(1, 0, 0xffffff, [0xe56e56]), { times: 2 });
       td.verify(room.setTeamColors(2, 0, 0xffffff, [0x5689e5]), { times: 2 });
     },
