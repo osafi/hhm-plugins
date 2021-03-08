@@ -19,6 +19,7 @@ global.makePlayer = (partial = {}) => ({
   position: partial.position || { x: 0, y: 0 },
   team: partial.team || 0,
   name: partial.name || '',
+  admin: !!partial.admin,
 });
 
 const setupInitialMocks = (room) => {
