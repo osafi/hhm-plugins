@@ -7,5 +7,5 @@ use the `purge-cache.sh` script
 
 ## TODO
 
-- Avoid hard-coded values in ball-touch plugin for ball/player radius and stadium goal post positions
+- Avoid hard-coded values in ball-touch plugin for ball/player radius
 - Add a github action to call purge endpoint for each plugin automatically

@@ -73,12 +73,18 @@ describe('ball touch', () => {
     td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: false }), { times: 1 });
   });
 
+  const sampleGoalPosts = {
+    red: { top: { x: -700, y: 100 }, bottom: { x: -700, y: -100 } },
+    blue: { top: { x: 800, y: 200 }, bottom: { x: 800, y: -200 } },
+  };
   pluginTest(
     pluginPath,
     'marks kick as a shot on goal if ball kicked within opposing goal posts',
     ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+
+      td.when(room.getPlugin('osafi/stadium').getStadiumGoalPosts()).thenReturn(sampleGoalPosts);
 
       const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
 
@@ -94,7 +100,7 @@ describe('ball touch', () => {
 
       td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: false }));
 
-      td.when(mockPointInTriangle({ x: 12, y: 23 }, { x: 100, y: 45 }, { x: 700, y: 100 }, { x: 700, y: -100 })).thenReturn(true);
+      td.when(mockPointInTriangle({ x: 12, y: 23 }, { x: 100, y: 45 }, { x: 800, y: 200 }, { x: 800, y: -200 })).thenReturn(true);
       room.onPlayerBallKick(player123);
 
       td.verify(room.triggerEvent('onPlayerTouchedBall', { player: player123, kicked: true, shotOnGoal: true }));
@@ -106,35 +112,32 @@ describe('ball touch', () => {
     }
   );
 
-  pluginTest(
-    pluginPath,
-    'does not check for shot on goal if player not within range',
-    ({ room, setPlayers, startGame, setBallPosition, setPlayerPosition }) => {
-      room.getPlugin('osafi/game-state').states = fakeStates;
-      td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+  pluginTest(pluginPath, 'does not check for shot on goal if player not within range', ({ room, setPlayers, startGame, setPlayerPosition }) => {
+    room.getPlugin('osafi/game-state').states = fakeStates;
+    td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+    td.when(room.getPlugin('osafi/stadium').getStadiumGoalPosts()).thenReturn(sampleGoalPosts);
 
-      const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
+    const mockPointInTriangle = room.getPlugin('osafi/math').pointInTriangle;
 
-      const player123 = makePlayer({ auth: '123', team: 1 });
-      const player456 = makePlayer({ auth: '456', team: 2 });
-      setPlayers([player123, player456]);
-      startGame();
+    const player123 = makePlayer({ auth: '123', team: 1 });
+    const player456 = makePlayer({ auth: '456', team: 2 });
+    setPlayers([player123, player456]);
+    startGame();
 
-      setPlayerPosition('123', 90, 0);
-      setPlayerPosition('456', -90, 0);
-      room.onPlayerBallKick(player123);
-      room.onPlayerBallKick(player456);
+    setPlayerPosition('123', 90, 0);
+    setPlayerPosition('456', -90, 0);
+    room.onPlayerBallKick(player123);
+    room.onPlayerBallKick(player456);
 
-      td.verify(mockPointInTriangle(), { times: 0, ignoreExtraArgs: true });
+    td.verify(mockPointInTriangle(), { times: 0, ignoreExtraArgs: true });
 
-      setPlayerPosition('123', 90.1, 0);
-      setPlayerPosition('456', -90.1, 0);
-      room.onPlayerBallKick(player123);
-      room.onPlayerBallKick(player456);
+    setPlayerPosition('123', 90.1, 0);
+    setPlayerPosition('456', -90.1, 0);
+    room.onPlayerBallKick(player123);
+    room.onPlayerBallKick(player456);
 
-      td.verify(mockPointInTriangle(), { times: 2, ignoreExtraArgs: true });
-    }
-  );
+    td.verify(mockPointInTriangle(), { times: 2, ignoreExtraArgs: true });
+  });
 
   pluginTest(
     pluginPath,
@@ -142,6 +145,7 @@ describe('ball touch', () => {
     ({ room, setPlayers, startGame, progressGame, setBallPosition, setPlayerPosition }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.BALL_IN_PLAY);
+      td.when(room.getPlugin('osafi/stadium').getStadiumGoalPosts()).thenReturn(sampleGoalPosts);
 
       const mockPointDistance = room.getPlugin('osafi/math').pointDistance;
 

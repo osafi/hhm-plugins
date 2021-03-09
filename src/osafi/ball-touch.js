@@ -8,10 +8,13 @@ room.pluginSpec = {
     touchHistoryLength: 5,
   },
   configDescriptions: {},
-  dependencies: ['osafi/math', 'osafi/game-state', 'sav/commands'],
+  dependencies: ['osafi/math', 'osafi/game-state', 'osafi/stadium', 'sav/commands'],
   order: {
     onGameTick: {
       after: ['osafi/game-state'],
+    },
+    onStadiumChange: {
+      after: ['osafi/stadium'],
     },
   },
   incompatible_with: [],
@@ -21,6 +24,8 @@ let touchHistoryLength;
 
 let statePlugin;
 let math;
+
+let getStadiumGoalPosts;
 
 let lastPlayersToTouchBall = [];
 
@@ -41,12 +46,6 @@ function updateLastPlayersToTouchBall(playerThatTouched, kicked, shotOnGoal) {
   }
 }
 
-// Goal post positions for 'Huge' stadium
-const goalPostPositions = {
-  red: { top: { x: -700, y: 100 }, bottom: { x: -700, y: -100 } },
-  blue: { top: { x: 700, y: 100 }, bottom: { x: 700, y: -100 } },
-};
-
 function isShotOnGoal(player) {
   const playerPosition = player.position;
   const inRange = player.team === 1 ? playerPosition.x > 90 : playerPosition.x < -90;
@@ -54,7 +53,7 @@ function isShotOnGoal(player) {
   if (!inRange) return false;
 
   const ballPosition = room.getBallPosition();
-  const posts = player.team === 1 ? goalPostPositions.blue : goalPostPositions.red;
+  const posts = player.team === 1 ? getStadiumGoalPosts().blue : getStadiumGoalPosts().red;
 
   if (math.pointInTriangle(ballPosition, playerPosition, posts.top, posts.bottom)) {
     room.sendAnnouncement(`${player.name}: shot on goal!`, null, 0x00ff00, 'small-italic', 0);
@@ -104,6 +103,7 @@ room.onRoomLink = () => {
   statePlugin = room.getPlugin('osafi/game-state');
   math = room.getPlugin('osafi/math');
   touchHistoryLength = room.getConfig().touchHistoryLength;
+  getStadiumGoalPosts = room.getPlugin('osafi/stadium').getStadiumGoalPosts;
 };
 
 // DEBUG helpers
