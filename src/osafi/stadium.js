@@ -14,17 +14,89 @@ room.pluginSpec = {
 };
 
 let stadiums = [
-  { name: 'Classic', default: true },
-  { name: 'Easy', default: true },
-  { name: 'Small', default: true },
-  { name: 'Big', default: true },
-  { name: 'Rounded', default: true },
-  { name: 'Hockey', default: true },
-  { name: 'Big Hockey', default: true },
-  { name: 'Big Easy', default: true },
-  { name: 'Big Rounded', default: true },
-  { name: 'Huge', default: true },
+  {
+    name: 'Classic',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -370, y: 64 }, bottom: { x: -370, y: -64 } },
+      blue: { top: { x: 370, y: 64 }, bottom: { x: 370, y: -64 } },
+    },
+  },
+  {
+    name: 'Easy',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -370, y: 90 }, bottom: { x: -370, y: -90 } },
+      blue: { top: { x: 370, y: 90 }, bottom: { x: 370, y: -90 } },
+    },
+  },
+  {
+    name: 'Small',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -320, y: 55 }, bottom: { x: -320, y: -55 } },
+      blue: { top: { x: 320, y: 55 }, bottom: { x: 320, y: -55 } },
+    },
+  },
+  {
+    name: 'Big',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -550, y: 80 }, bottom: { x: -550, y: -80 } },
+      blue: { top: { x: 550, y: 80 }, bottom: { x: 550, y: -80 } },
+    },
+  },
+  {
+    name: 'Rounded',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -370, y: 64 }, bottom: { x: -370, y: -64 } },
+      blue: { top: { x: 370, y: 64 }, bottom: { x: 370, y: -64 } },
+    },
+  },
+  {
+    name: 'Hockey',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -278, y: 68 }, bottom: { x: -278, y: -68 } },
+      blue: { top: { x: 278, y: 68 }, bottom: { x: 278, y: -68 } },
+    },
+  },
+  {
+    name: 'Big Hockey',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -390, y: 90 }, bottom: { x: -390, y: -90 } },
+      blue: { top: { x: 390, y: 90 }, bottom: { x: 390, y: -90 } },
+    },
+  },
+  {
+    name: 'Big Easy',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -550, y: 95 }, bottom: { x: -550, y: -95 } },
+      blue: { top: { x: 550, y: 95 }, bottom: { x: 550, y: -95 } },
+    },
+  },
+  {
+    name: 'Big Rounded',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -550, y: 80 }, bottom: { x: -550, y: -80 } },
+      blue: { top: { x: 550, y: 80 }, bottom: { x: 550, y: -80 } },
+    },
+  },
+  {
+    name: 'Huge',
+    default: true,
+    goalPosts: {
+      red: { top: { x: -700, y: 100 }, bottom: { x: -700, y: -100 } },
+      blue: { top: { x: 700, y: 100 }, bottom: { x: 700, y: -100 } },
+    },
+  },
 ];
+
+let selectedStadium = stadiums[0];
 
 function setStadium(stadium) {
   if (stadium.default) {
@@ -32,6 +104,7 @@ function setStadium(stadium) {
   } else {
     room.setCustomStadium(stadium.hbs);
   }
+  selectedStadium = stadium;
 }
 
 function setStadiumByName(stadiumName) {
@@ -48,9 +121,27 @@ room.setStadium = (stadiumName) => {
   setStadiumByName(stadiumName);
 };
 
+room.getStadiumGoalPosts = () => {
+  return selectedStadium.goalPosts;
+};
+
+function getGoalPostsFromHbsData(stadiumData) {
+  const { goals } = stadiumData;
+  return {
+    [goals[0].team]: { top: { x: goals[0].p0[0], y: goals[0].p0[1] }, bottom: { x: goals[0].p1[0], y: goals[0].p1[1] } },
+    [goals[1].team]: { top: { x: goals[1].p0[0], y: goals[1].p0[1] }, bottom: { x: goals[1].p1[0], y: goals[0].p1[1] } },
+  };
+}
+
 room.onRoomLink = () => {
   const config = room.getConfig();
-  const additionalStadiums = config.additionalStadiums.map((ad) => ({ name: ad.name, default: false, hbs: JSON.stringify(ad) }));
+
+  const additionalStadiums = config.additionalStadiums.map((ad) => ({
+    name: ad.name,
+    default: false,
+    goalPosts: getGoalPostsFromHbsData(ad),
+    hbs: JSON.stringify(ad),
+  }));
   stadiums = stadiums.concat(additionalStadiums);
 };
 

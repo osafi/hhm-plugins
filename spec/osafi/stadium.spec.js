@@ -5,8 +5,20 @@ describe('stadium', () => {
 
   const testPlayer = makePlayer({ id: 123, admin: true });
 
-  const sampleStadium1 = { name: 'Sample Map 1' };
-  const sampleStadium2 = { name: 'Sample Map 2' };
+  const sampleStadium1 = {
+    name: 'Sample Map 1',
+    goals: [
+      { p0: [-800, 100], p1: [-800, -100], team: 'red' },
+      { p0: [800, 100], p1: [800, -100], team: 'blue' },
+    ],
+  };
+  const sampleStadium2 = {
+    name: 'Sample Map 2',
+    goals: [
+      { p0: [-700, 100], p1: [-700, -100], team: 'red' },
+      { p0: [700, 100], p1: [700, -100], team: 'blue' },
+    ],
+  };
 
   pluginTest(
     pluginPath,
@@ -125,5 +137,42 @@ describe('stadium', () => {
 
     td.verify(room.setDefaultStadium(), { times: 0, ignoreExtraArgs: true });
     td.verify(room.setCustomStadium(), { times: 0, ignoreExtraArgs: true });
+  });
+
+  pluginTest(
+    pluginPath,
+    'can get goal post locations for custom maps',
+    ({ room }) => {
+      td.when(room.getConfig()).thenReturn({
+        additionalStadiums: [sampleStadium1, sampleStadium2],
+      });
+      room.onRoomLink();
+
+      room.setStadium(sampleStadium1.name);
+      expect(room.getStadiumGoalPosts()).toEqual({
+        red: { top: { x: -800, y: 100 }, bottom: { x: -800, y: -100 } },
+        blue: { top: { x: 800, y: 100 }, bottom: { x: 800, y: -100 } },
+      });
+
+      room.setStadium(sampleStadium2.name);
+      expect(room.getStadiumGoalPosts()).toEqual({
+        red: { top: { x: -700, y: 100 }, bottom: { x: -700, y: -100 } },
+        blue: { top: { x: 700, y: 100 }, bottom: { x: 700, y: -100 } },
+      });
+    },
+    false
+  );
+
+  pluginTest(pluginPath, 'can get goal post locations for default maps', ({ room }) => {
+    expect(room.getStadiumGoalPosts()).toEqual({
+      red: { top: { x: -370, y: 64 }, bottom: { x: -370, y: -64 } },
+      blue: { top: { x: 370, y: 64 }, bottom: { x: 370, y: -64 } },
+    });
+
+    room.setStadium('Huge');
+    expect(room.getStadiumGoalPosts()).toEqual({
+      red: { top: { x: -700, y: 100 }, bottom: { x: -700, y: -100 } },
+      blue: { top: { x: 700, y: 100 }, bottom: { x: 700, y: -100 } },
+    });
   });
 });
