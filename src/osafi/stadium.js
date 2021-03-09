@@ -104,26 +104,20 @@ function setStadium(stadium) {
   } else {
     room.setCustomStadium(stadium.hbs);
   }
-  selectedStadium = stadium;
-}
-
-function setStadiumByName(stadiumName) {
-  const stadium = stadiums.find((s) => s.name === stadiumName);
-  if (!stadium) {
-    room.log(`No stadium by name: ${stadiumName}`, HHM.log.level.ERROR);
-    return;
-  }
-
-  setStadium(stadium);
 }
 
 room.setStadium = (stadiumName) => {
-  setStadiumByName(stadiumName);
+  const stadium = stadiums.find((s) => s.name === stadiumName);
+  if (stadium) {
+    setStadium(stadium);
+  } else {
+    room.log(`No stadium by name: ${stadiumName}`, HHM.log.level.ERROR);
+  }
 };
 
-room.getStadiumGoalPosts = () => {
-  return selectedStadium.goalPosts;
-};
+room.getSelectedStadium = () => selectedStadium;
+
+room.getStadiumGoalPosts = () => selectedStadium.goalPosts;
 
 function getGoalPostsFromHbsData(stadiumData) {
   const { goals } = stadiumData;
@@ -143,6 +137,15 @@ room.onRoomLink = () => {
     hbs: JSON.stringify(ad),
   }));
   stadiums = stadiums.concat(additionalStadiums);
+};
+
+room.onStadiumChange = (stadiumName) => {
+  const stadium = stadiums.find((s) => s.name === stadiumName);
+  if (stadium) {
+    selectedStadium = stadium;
+  } else {
+    setStadium(selectedStadium);
+  }
 };
 
 function printStadiums() {
