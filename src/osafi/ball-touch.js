@@ -73,8 +73,12 @@ room.onPositionsReset = () => {
   lastPlayersToTouchBall = [];
 };
 
+function ballInPlay() {
+  return statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY;
+}
+
 room.onGameTick = () => {
-  if (statePlugin.getGameState() === statePlugin.states.BALL_IN_PLAY) {
+  if (ballInPlay()) {
     const ballPosition = room.getBallPosition();
     for (let player of room.getPlayerList()) {
       if (player.position != null) {
@@ -89,9 +93,11 @@ room.onGameTick = () => {
 };
 
 room.onPlayerBallKick = (player) => {
-  const shotOnGoal = isShotOnGoal(player);
-  updateLastPlayersToTouchBall(player, true, shotOnGoal);
-  room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
+  if (ballInPlay()) {
+    const shotOnGoal = isShotOnGoal(player);
+    updateLastPlayersToTouchBall(player, true, shotOnGoal);
+    room.triggerEvent('onPlayerTouchedBall', lastPlayersToTouchBall[0]);
+  }
 };
 
 room.onRoomLink = () => {

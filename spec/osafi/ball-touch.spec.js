@@ -13,11 +13,14 @@ describe('ball touch', () => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       td.when(room.getPlugin('osafi/game-state').getGameState()).thenReturn(fakeStates.OTHER);
 
-      setPlayers([makePlayer({ auth: '123' })]);
+      const player123 = makePlayer({ auth: '123' });
+      setPlayers([player123]);
       startGame();
       setBallPosition(1, 1);
       setPlayerPosition('123', 1, 1);
       progressGame();
+
+      room.onPlayerBallKick(player123);
 
       td.verify(room.triggerEvent(), { ignoreExtraArgs: true, times: 0 });
     }
