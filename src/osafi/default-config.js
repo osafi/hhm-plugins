@@ -38,6 +38,11 @@ function setRoomConfig() {
   room.log(`Applied default config: ${JSON.stringify(config)}`, HHM.log.level.INFO);
 }
 
+room.onRoomLink = () => {
+  if (room.getPlugin('osafi/stadium').stadiumsLoaded()) {
+    setRoomConfig();
+  }
+};
 room.onStadiumsLoaded = () => {
   setRoomConfig();
 };

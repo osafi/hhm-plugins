@@ -95,7 +95,7 @@ describe('stadium', () => {
 
   pluginTest(
     pluginPath,
-    'triggers an onStadiumsLoaded event when loading is complete',
+    'triggers an onStadiumsLoaded event and sets loaded state when loading is complete',
     async ({ room }) => {
       td.when(room.getConfig()).thenReturn({
         additionalStadiums: ['https://example.com/map1.hbs'],
@@ -105,10 +105,12 @@ describe('stadium', () => {
 
       const onRoomLinkPromise = room.onRoomLink();
 
+      expect(room.stadiumsLoaded()).toBeFalse();
       td.verify(room.triggerEvent('onStadiumsLoaded'), { times: 0 });
 
       await onRoomLinkPromise;
 
+      expect(room.stadiumsLoaded()).toBeTrue();
       td.verify(room.triggerEvent('onStadiumsLoaded'));
     },
     false

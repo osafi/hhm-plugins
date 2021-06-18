@@ -96,6 +96,7 @@ let stadiums = [
   },
 ];
 
+let stadiumsLoaded = false;
 let selectedStadium = stadiums[0];
 
 function setStadium(stadium) {
@@ -165,8 +166,11 @@ room.onRoomLink = async () => {
 
   stadiums = stadiums.concat(additionalStadiums);
 
+  stadiumsLoaded = true;
   room.triggerEvent('onStadiumsLoaded');
 };
+
+room.stadiumsLoaded = () => stadiumsLoaded;
 
 room.onStadiumChange = (stadiumName) => {
   const stadium = stadiums.find((s) => s.name === stadiumName);
