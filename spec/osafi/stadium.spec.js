@@ -1,3 +1,4 @@
+const nock = require('nock');
 const td = require('testdouble');
 const any = td.matchers.anything;
 
@@ -24,11 +25,11 @@ describe('stadium', () => {
   pluginTest(
     pluginPath,
     'can get a list of available stadiums',
-    ({ room }) => {
+    async ({ room }) => {
       td.when(room.getConfig()).thenReturn({
         additionalStadiums: [sampleStadium1, sampleStadium2],
       });
-      room.onRoomLink();
+      await room.onRoomLink();
 
       room.onCommand0_stadiums(testPlayer);
 
@@ -52,6 +53,67 @@ describe('stadium', () => {
     false
   );
 
+  pluginTest(
+    pluginPath,
+    'can load additional stadiums from URL',
+    async ({ room }) => {
+      td.when(room.getConfig()).thenReturn({
+        additionalStadiums: ['https://example.com/map1.hbs', 'https://example.com/map2.hbs'],
+      });
+
+      nock('https://example.com').get('/map1.hbs').reply(200, sampleStadium1);
+      nock('https://example.com').get('/map2.hbs').reply(200, sampleStadium2);
+
+      await room.onRoomLink();
+
+      room.onCommand0_stadiums(testPlayer);
+
+      td.verify(room.sendAnnouncement(td.matchers.contains('11. Sample Map 1')));
+      td.verify(room.sendAnnouncement(td.matchers.contains('12. Sample Map 2')));
+    },
+    false
+  );
+
+  pluginTest(
+    pluginPath,
+    'logs error when failing to load additional stadiums from URL',
+    async ({ room }) => {
+      td.when(room.getConfig()).thenReturn({
+        additionalStadiums: ['https://example.com/map1.hbs'],
+      });
+
+      nock('https://example.com').get('/map1.hbs').reply(400, 'something bad happened');
+
+      await room.onRoomLink();
+
+      room.onCommand0_stadiums(testPlayer);
+
+      td.verify(room.log('Unable to load map from https://example.com/map1.hbs: 400 - Bad Request - something bad happened', HHM.log.level.ERROR));
+    },
+    false
+  );
+
+  pluginTest(
+    pluginPath,
+    'triggers an onStadiumsLoaded event when loading is complete',
+    async ({ room }) => {
+      td.when(room.getConfig()).thenReturn({
+        additionalStadiums: ['https://example.com/map1.hbs'],
+      });
+
+      nock('https://example.com').get('/map1.hbs').reply(200, sampleStadium1);
+
+      const onRoomLinkPromise = room.onRoomLink();
+
+      td.verify(room.triggerEvent('onStadiumsLoaded'), { times: 0 });
+
+      await onRoomLinkPromise;
+
+      td.verify(room.triggerEvent('onStadiumsLoaded'));
+    },
+    false
+  );
+
   describe('setStadium', () => {
     pluginTest(pluginPath, 'can set the stadium to a default stadium', ({ room }) => {
       room.setStadium('Classic');
@@ -61,11 +123,11 @@ describe('stadium', () => {
     pluginTest(
       pluginPath,
       'can set the stadium to a custom stadium',
-      ({ room }) => {
+      async ({ room }) => {
         td.when(room.getConfig()).thenReturn({
           additionalStadiums: [sampleStadium1, sampleStadium2],
         });
-        room.onRoomLink();
+        await room.onRoomLink();
 
         room.setStadium('Sample Map 2');
         td.verify(room.setCustomStadium(JSON.stringify(sampleStadium2)));
@@ -76,11 +138,11 @@ describe('stadium', () => {
     pluginTest(
       pluginPath,
       'error logged when setting stadium to one that doesnt exist',
-      ({ room }) => {
+      async ({ room }) => {
         td.when(room.getConfig()).thenReturn({
           additionalStadiums: [sampleStadium1, sampleStadium2],
         });
-        room.onRoomLink();
+        await room.onRoomLink();
 
         room.setStadium('Sample Map 3');
 
@@ -96,11 +158,11 @@ describe('stadium', () => {
     pluginTest(
       pluginPath,
       'sets the stadium using stadium number',
-      ({ room }) => {
+      async ({ room }) => {
         td.when(room.getConfig()).thenReturn({
           additionalStadiums: [sampleStadium1, sampleStadium2],
         });
-        room.onRoomLink();
+        await room.onRoomLink();
 
         room.onCommand1_stadium(testPlayer, ['1']);
         td.verify(room.setDefaultStadium('Classic'));
@@ -114,11 +176,11 @@ describe('stadium', () => {
     pluginTest(
       pluginPath,
       'error when out of range stadium number given',
-      ({ room }) => {
+      async ({ room }) => {
         td.when(room.getConfig()).thenReturn({
           additionalStadiums: [sampleStadium1, sampleStadium2],
         });
-        room.onRoomLink();
+        await room.onRoomLink();
 
         room.onCommand1_stadium(testPlayer, ['0']);
         td.verify(room.sendAnnouncement('0 is not a valid stadium'));
@@ -148,11 +210,11 @@ describe('stadium', () => {
     pluginTest(
       pluginPath,
       'sets selected stadium',
-      ({ room }) => {
+      async ({ room }) => {
         td.when(room.getConfig()).thenReturn({
           additionalStadiums: [sampleStadium1, sampleStadium2],
         });
-        room.onRoomLink();
+        await room.onRoomLink();
 
         room.onStadiumChange('Sample Map 2');
         expect(room.getSelectedStadium()).toEqual(jasmine.objectContaining({ name: 'Sample Map 2', default: false }));
@@ -193,11 +255,11 @@ describe('stadium', () => {
     pluginTest(
       pluginPath,
       'goal post locations for custom maps',
-      ({ room }) => {
+      async ({ room }) => {
         td.when(room.getConfig()).thenReturn({
           additionalStadiums: [sampleStadium1, sampleStadium2],
         });
-        room.onRoomLink();
+        await room.onRoomLink();
 
         room.onStadiumChange(sampleStadium1.name);
         expect(room.getStadiumGoalPosts()).toEqual({

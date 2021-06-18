@@ -119,24 +119,53 @@ room.getSelectedStadium = () => selectedStadium;
 
 room.getStadiumGoalPosts = () => selectedStadium.goalPosts;
 
-function getGoalPostsFromHbsData(stadiumData) {
-  const { goals } = stadiumData;
+function convertHbsJsonToStadium(hbsJson) {
+  const { name, goals } = hbsJson;
   return {
-    [goals[0].team]: { top: { x: goals[0].p0[0], y: goals[0].p0[1] }, bottom: { x: goals[0].p1[0], y: goals[0].p1[1] } },
-    [goals[1].team]: { top: { x: goals[1].p0[0], y: goals[1].p0[1] }, bottom: { x: goals[1].p1[0], y: goals[0].p1[1] } },
+    name,
+    default: false,
+    goalPosts: {
+      [goals[0].team]: { top: { x: goals[0].p0[0], y: goals[0].p0[1] }, bottom: { x: goals[0].p1[0], y: goals[0].p1[1] } },
+      [goals[1].team]: { top: { x: goals[1].p0[0], y: goals[1].p0[1] }, bottom: { x: goals[1].p1[0], y: goals[0].p1[1] } },
+    },
+    hbs: JSON.stringify(hbsJson),
   };
 }
 
-room.onRoomLink = () => {
+async function fetchStadiumFromUrl(stadiumUrl) {
+  room.log(`Fetching map from ${stadiumUrl}`, HHM.log.level.INFO);
+  const response = await fetch(stadiumUrl);
+  if (response.ok) {
+    const mapData = await response.json();
+    room.log(`Fetched map from ${stadiumUrl}`);
+    return mapData;
+  } else {
+    const body = await response.text();
+    room.log(`Unable to load map from ${stadiumUrl}: ${response.status} - ${response.statusText} - ${body}`, HHM.log.level.ERROR);
+  }
+}
+
+async function loadAdditionalStadiums(additionalStadiums) {
+  const result = [];
+  for (const data of additionalStadiums) {
+    if (typeof data !== 'string') {
+      result.push(convertHbsJsonToStadium(data));
+    } else {
+      const stadiumData = await fetchStadiumFromUrl(data);
+      stadiumData && result.push(convertHbsJsonToStadium(stadiumData));
+    }
+  }
+  return result;
+}
+
+room.onRoomLink = async () => {
   const config = room.getConfig();
 
-  const additionalStadiums = config.additionalStadiums.map((ad) => ({
-    name: ad.name,
-    default: false,
-    goalPosts: getGoalPostsFromHbsData(ad),
-    hbs: JSON.stringify(ad),
-  }));
+  const additionalStadiums = await loadAdditionalStadiums(config.additionalStadiums);
+
   stadiums = stadiums.concat(additionalStadiums);
+
+  room.triggerEvent('onStadiumsLoaded');
 };
 
 room.onStadiumChange = (stadiumName) => {

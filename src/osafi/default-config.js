@@ -21,11 +21,7 @@ room.pluginSpec = {
   },
   configDescriptions: {},
   dependencies: ['osafi/stadium'],
-  order: {
-    onRoomLink: {
-      after: ['osafi/stadium'],
-    },
-  },
+  order: {},
   incompatible_with: [],
 };
 
@@ -42,7 +38,7 @@ function setRoomConfig() {
   room.log(`Applied default config: ${JSON.stringify(config)}`, HHM.log.level.INFO);
 }
 
-room.onRoomLink = () => {
+room.onStadiumsLoaded = () => {
   setRoomConfig();
 };
 room.onCommand0_defaults = () => {
