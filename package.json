@@ -10,11 +10,11 @@
     "prettier": "prettier --write ."
   },
   "devDependencies": {
-    "jasmine": "^3.6.3",
-    "nock": "^13.0.5",
-    "node-fetch": "^2.6.1",
-    "prettier": "^2.2.1",
-    "testdouble": "^3.16.1"
+    "jasmine": "^3.10.0",
+    "nock": "^13.2.0",
+    "node-fetch": "^2.6.6",
+    "prettier": "^2.4.1",
+    "testdouble": "^3.16.3"
   },
   "prettier": {
     "trailingComma": "es5",

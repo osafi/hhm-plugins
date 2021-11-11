@@ -106,24 +106,26 @@ const generateGameHelpers = (room) => {
   };
 };
 
-const makePluginTestFunction = (testFn) => (pluginModulePath, testName, testFunction, initializeRoom = true) => {
-  testFn(testName, async () => {
-    const room = td.object();
-    setupInitialMocks(room);
+const makePluginTestFunction =
+  (testFn) =>
+  (pluginModulePath, testName, testFunction, initializeRoom = true) => {
+    testFn(testName, async () => {
+      const room = td.object();
+      setupInitialMocks(room);
 
-    HBInit = td.when(td.func()()).thenReturn(room);
-    require(pluginModulePath);
-    if (initializeRoom) {
-      room.onRoomLink('init');
-    }
+      HBInit = td.when(td.func()()).thenReturn(room);
+      require(pluginModulePath);
+      if (initializeRoom) {
+        room.onRoomLink('init');
+      }
 
-    try {
-      await testFunction({ room, ...generateGameHelpers(room) });
-    } finally {
-      delete require.cache[require.resolve(pluginModulePath)];
-    }
-  });
-};
+      try {
+        await testFunction({ room, ...generateGameHelpers(room) });
+      } finally {
+        delete require.cache[require.resolve(pluginModulePath)];
+      }
+    });
+  };
 global.pluginTest = makePluginTestFunction(it);
 global.fpluginTest = makePluginTestFunction(fit);
 global.xpluginTest = makePluginTestFunction(xit);
