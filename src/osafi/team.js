@@ -11,7 +11,12 @@ room.pluginSpec = {
   incompatible_with: [],
 };
 
-room.onCommand0_swap = () => {
+room.onCommand0_swap = (player) => {
+  if (!player.admin) {
+    room.sendAnnouncement('Only room admin can use the swap command');
+    return;
+  }
+
   room
     .getPlayerList()
     .filter((p) => p.team != 0)
