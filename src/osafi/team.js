@@ -22,3 +22,19 @@ room.onCommand0_swap = (player) => {
     .filter((p) => p.team != 0)
     .forEach((p) => room.setPlayerTeam(p.id, (p.team % 2) + 1));
 };
+
+room.onCommand0_randomize = (player) => {
+  if (!player.admin) {
+    room.sendAnnouncement('Only room admin can use the randomize command');
+    return;
+  }
+
+  shuffle(room.getPlayerList()).forEach((p, index) => room.setPlayerTeam(p.id, index % 2 === 0 ? 2 : 1));
+};
+
+function shuffle(array) {
+  return array
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
