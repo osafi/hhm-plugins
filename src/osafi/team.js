@@ -23,9 +23,9 @@ room.onCommand0_swap = (player) => {
     .forEach((p) => room.setPlayerTeam(p.id, (p.team % 2) + 1));
 };
 
-room.onCommand0_randomize = (player) => {
+room.onCommand0_shuffle = (player) => {
   if (!player.admin) {
-    room.sendAnnouncement('Only room admin can use the randomize command');
+    room.sendAnnouncement('Only room admin can use the shuffle command');
     return;
   }
 

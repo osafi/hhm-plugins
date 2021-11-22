@@ -35,14 +35,14 @@ describe('team', () => {
     });
   });
 
-  describe('randomize command', () => {
-    pluginTest(pluginPath, 'error when non-admin player tries to use command to randomize teams', ({ room, setPlayers }) => {
+  describe('shuffle command', () => {
+    pluginTest(pluginPath, 'error when non-admin player tries to use command to shuffle teams', ({ room, setPlayers }) => {
       const player123 = makePlayer({ id: 123, team: 2 });
       setPlayers([player123]);
 
-      room.onCommand0_randomize(nonAdmin);
+      room.onCommand0_shuffle(nonAdmin);
 
-      td.verify(room.sendAnnouncement('Only room admin can use the randomize command'));
+      td.verify(room.sendAnnouncement('Only room admin can use the shuffle command'));
       td.verify(room.setPlayerTeam(), { times: 0, ignoreExtraArgs: true });
     });
 
@@ -53,7 +53,7 @@ describe('team', () => {
       const player987 = makePlayer({ id: 987, team: 0 });
       setPlayers([player123, player456, player789, player987]);
 
-      room.onCommand0_randomize(admin);
+      room.onCommand0_shuffle(admin);
 
       const teamAssignments = captureTeamAssignments({ room, expectedAssignments: 4 });
       expect(teamAssignments[1]).toHaveSize(2);
@@ -66,7 +66,7 @@ describe('team', () => {
       const player789 = makePlayer({ id: 789, team: 0 });
       setPlayers([player123, player456, player789]);
 
-      room.onCommand0_randomize(admin);
+      room.onCommand0_shuffle(admin);
 
       const teamAssignments = captureTeamAssignments({ room, expectedAssignments: 3 });
       expect(teamAssignments[1]).toHaveSize(1);
@@ -79,16 +79,16 @@ describe('team', () => {
         .map((_, index) => makePlayer({ id: index }));
       setPlayers(players);
 
-      room.onCommand0_randomize(admin);
+      room.onCommand0_shuffle(admin);
       const firstTeamAssignments = captureTeamAssignments({ room, expectedAssignments: 100 });
 
-      room.onCommand0_randomize(admin);
+      room.onCommand0_shuffle(admin);
       const secondTeamAssignments = captureTeamAssignments({ room, expectedAssignments: 100 });
 
       expect(secondTeamAssignments[1]).not.toEqual(firstTeamAssignments[1]);
       expect(secondTeamAssignments[2]).not.toEqual(firstTeamAssignments[2]);
 
-      room.onCommand0_randomize(admin);
+      room.onCommand0_shuffle(admin);
       const thirdTeamAssignments = captureTeamAssignments({ room, expectedAssignments: 100 });
 
       expect(thirdTeamAssignments[1]).not.toEqual(secondTeamAssignments[1]);
