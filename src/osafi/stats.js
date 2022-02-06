@@ -95,6 +95,8 @@ room.getPlayerStats = () => {
 };
 
 room.onGameStart = () => {
+  lastTouch = null;
+
   ballDistribution = {
     [Areas.CENTER]: 0,
     [Areas.RED]: 0,

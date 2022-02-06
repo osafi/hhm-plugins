@@ -382,6 +382,35 @@ describe('stats', () => {
       ]);
     });
 
+    // There can be a brief moment where a player has touched/kicked the ball at kickoff but this plugin
+    // hasn't been able to handle the first onPlayerTouchedBall event yet. So even though a new player has
+    // touched the ball the internal state of this plugin (lastTouch) could still be
+    // referencing a player from a previous match. If the player is not in the current game an error
+    // would be thrown and logged for every game tick after kickoff causing the game to freeze.
+    pluginTest(
+      pluginPath,
+      'does not error when player who last touched ball in previous game is not in current game',
+      ({ room, progressGame, setPlayers, startGame }) => {
+        room.getPlugin('osafi/game-state').states = fakeStates;
+        room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
+
+        const player123 = makePlayer({ auth: '123', team: 1 });
+        const player456 = makePlayer({ auth: '456', team: 1 });
+        setPlayers([player123, player456]);
+        startGame();
+
+        // player123 touches ball and has possession
+        room.onPlayerTouchedBall({ player: player123 });
+        progressGame(1);
+
+        // player123 leaves for next game
+        setPlayers([player456]);
+        startGame();
+
+        expect(() => progressGame(1)).not.toThrow();
+      }
+    );
+
     pluginTest(pluginPath, 'goals', ({ room, setPlayers, startGame, goal }) => {
       room.getPlugin('osafi/game-state').states = fakeStates;
       room.onGameStateChanged(fakeStates.BALL_IN_PLAY);
